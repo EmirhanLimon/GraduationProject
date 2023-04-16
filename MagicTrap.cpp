@@ -2,6 +2,8 @@
 
 
 #include "MagicTrap.h"
+
+
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -46,6 +48,7 @@ void AMagicTrap::TrapOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	if(OtherActor == nullptr) return;
 	Grux = Cast<AGrux>(OtherActor);
 	Khaimera = Cast<AKhaimera>(OtherActor);
+	Narbash = Cast<ANarbash>(OtherActor);
 	if(Grux)
 	{
 		Grux->SetGruxStunned(true);
@@ -56,6 +59,11 @@ void AMagicTrap::TrapOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		Khaimera->SetKhaimeraStunned(true);
 		Khaimera->GetCharacterMovement()->MaxWalkSpeed = 0;
 	}
+	if(Narbash)
+	{
+		Narbash->SetNarbashStunned(true);
+		Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
+	}
 }
 
 void AMagicTrap::TrapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -64,6 +72,7 @@ void AMagicTrap::TrapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor
 	if(OtherActor == nullptr) return;
 	Grux = Cast<AGrux>(OtherActor);
 	Khaimera = Cast<AKhaimera>(OtherActor);
+	Narbash = Cast<ANarbash>(OtherActor);
 	if(Grux)
 	{
 		Grux->SetGruxStunned(false);
@@ -72,20 +81,17 @@ void AMagicTrap::TrapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor
 	if(Khaimera)
 	{
 		Khaimera->SetKhaimeraStunned(false);
-		Khaimera->GetCharacterMovement()->MaxWalkSpeed = 600;
+		Khaimera->GetCharacterMovement()->MaxWalkSpeed = 800;
+	}
+	if(Narbash)
+	{
+		Narbash->SetNarbashStunned(false);
+		Narbash->GetCharacterMovement()->MaxWalkSpeed = 800;
 	}
 }
 
 void AMagicTrap::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if(Grux && Grux->GetGruxStunned())
-	{
-		GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("1231"));
-	}
-	if(Khaimera && Khaimera->GetKhaimeraStunned())
-	{
-		GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("1231"));
-	}
 }
 

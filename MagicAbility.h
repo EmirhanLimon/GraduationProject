@@ -30,14 +30,6 @@ private:
 	UParticleSystemComponent* ThunderStormParticleSystemComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item Properties", meta = (AllowPrivateAccess))
 	AWarriorCharacter* Character;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* GruxHitReacts;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* KhaimeraHitReacts;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* FeyHitReacts;
-	
-
 public:	
 	
 	virtual void Tick(float DeltaTime) override;

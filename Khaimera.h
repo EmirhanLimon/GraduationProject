@@ -90,6 +90,8 @@ private:
 	bool bBehind;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* KhaimeraDieMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* KhaimeraHitReacts;
 
 	public:
 	FORCEINLINE void SetKhaimeraStunned(bool NewKhaimeraStunned) { bKhaimeraStunned = NewKhaimeraStunned; }
@@ -97,6 +99,7 @@ private:
 	FORCEINLINE bool GetDied() const { return bKhaimeraDied; }
 	FORCEINLINE void SetKhaimeraHealth(float NewKhaimeraHealth) { KhaimeraHealth = NewKhaimeraHealth; }
 	FORCEINLINE float GetKhaimeraHealth() const { return KhaimeraHealth; }
+	FORCEINLINE UAnimMontage* GetKhaimeraHitReacts() const { return KhaimeraHitReacts; }
 	FORCEINLINE EKhaimeraCombatState GetKhaimeraCombatState() const { return KhaimeraCombatState; }
 	FORCEINLINE void SetKhaimeraCombatState(EKhaimeraCombatState NewKhaimeraCombatState) { KhaimeraCombatState = NewKhaimeraCombatState; }
 	FORCEINLINE void SetKhaimeraDied(bool NewKhaimeraDied) { bKhaimeraDied = NewKhaimeraDied; }

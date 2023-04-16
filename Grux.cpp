@@ -25,7 +25,7 @@ AGrux::AGrux() :
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+	GruxPawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("GruxPawnSensing"));
 
 	CombatRangeSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CombatRangeSphereComponent"));
 	CombatRangeSphereComponent->SetupAttachment(GetRootComponent());
@@ -42,7 +42,7 @@ void AGrux::BeginPlay()
 	Super::BeginPlay();
 	AIC_Ref = Cast<AEnemyController>(GetController());
 	Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	PawnSensing->OnHearNoise.AddDynamic(this, &AGrux::OnHearNoise);
+	GruxPawnSensing->OnHearNoise.AddDynamic(this, &AGrux::OnHearNoise);
 
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -61,7 +61,6 @@ void AGrux::OnHearNoise(APawn* OtherActor, const FVector& Location, float Volume
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && GruxCombatState == EGruxCombatState::EGCS_Unoccupied && !bGruxDied && !bGruxStunned)
 	{
-		GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("1231"));
 		AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
 		GetWorldTimerManager().ClearTimer(PatrolTimer);
 		GetCharacterMovement()->MaxWalkSpeed = 600;
@@ -116,13 +115,27 @@ void AGrux::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && bCanDoDamageLeftWeapon && !bGruxDied && !bGruxStunned)
 	{
-		Character->SetCharacterHealth(Character->GetCharacterHealth() - 3);
+		if(!Character->GetInvincibility())
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 3);
+			if(Character->GetCharacterHealth() <= 0)
+			{
+				Character->SetCharacterHealth(0);
+			}
+		}
+		else
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 3);
+			if(Character->GetCharacterHealth() >= 100)
+			{
+				Character->SetCharacterHealth(100);
+			}
+		}
 		bCanDoDamageLeftWeapon = false;
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
 		{
 			const float HitReacts = FMath::RandRange(0.f, 1.f);
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("12321"));
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior && HitReacts <= 0.5f)
 			{
 				if(bBehind)
@@ -176,7 +189,6 @@ void AGrux::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 		bCombatRange = true;
 		if(bCombatRange)
 		{
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("sdada"));
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 			const float GruxAttackChance = FMath::FRandRange(0.f,1.f);
 			GetCharacterMovement()->MaxWalkSpeed = 0;

@@ -11,6 +11,7 @@
 #include "DrawDebugHelpers.h"
 #include "Grux.h"
 #include "Khaimera.h"
+#include "Narbash.h"
 #include "MyPlayerCameraManager.h"
 #include "Chaos/GeometryParticlesfwd.h"
 #include "Components/SphereComponent.h"
@@ -58,9 +59,9 @@ AWarriorCharacter::AWarriorCharacter() :
 	Alpha(0.f),
 	ClampValue(0.f),
 	DistanceTargetEnemy(0.f),
-	TargetEnemy(false),
 	GruxRendered(false),
 	KhaimeraRendered(false),
+	NarbashRendered(false),
 	FastArrowFire(false),
 	ArrowSpawnedAmount(0),
 	WarriorFirstSkillCooldown(0.f),
@@ -73,7 +74,14 @@ AWarriorCharacter::AWarriorCharacter() :
 	ArcherFourthSkillCooldown(0.f),
 	SwordAttacking(false),
 	Invincibility(false),
-	FeyRendered(false)
+	FeyRendered(false),
+	HealthPotionAmount(0.f),
+	ManaPotionAmount(0.f),
+	HealthPotionCooldown(0.f),
+	ManaPotionCooldown(0.f),
+	ManaPotionTriggerAmount(0),
+	HealthPotionTriggerAmount(0),
+	InSafeZone(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -98,9 +106,6 @@ AWarriorCharacter::AWarriorCharacter() :
 	TurnParticleSystemComponent = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TurnParticleSystemComponent"));
 	TurnParticleSystemComponent->SetupAttachment(TurnFloorCollisionSphere);
 	TurnParticleSystemComponent->Activate(false);
-
-	TargetEnemyCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("TargetEnemyControlCollision"));
-	TargetEnemyCollision->SetupAttachment(GetRootComponent());
 
 	WarriorWeaponCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("SwordCollisionCapsule"));
 	WarriorWeaponCollision->SetupAttachment(GetMesh(), FName("sword_top"));
@@ -134,17 +139,20 @@ void AWarriorCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	SpeedBoostCooldownTimerFunction();
-
-	TargetEnemyCollision->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::TargetOverlap);
-	TargetEnemyCollision->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::OnTargetEnd);
 	
 	WarriorWeaponCollision->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::WarriorWeaponOverlap);
 	TurnCollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::WarriorFirstSpinOverlap);
 	TurnCollisionSphere2->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::WarriorSecondSpinOverlap);
 	BehindCollision->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::BehindOverlap);
 	BehindCollision->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::BehindEnd);
-	FTimerHandle ManaRestoreTriggerTimer;
+	/*FTimerHandle ManaRestoreTriggerTimer;
+	FTimerHandle HealthRestoreTriggerTimer;
 	GetWorldTimerManager().SetTimer(ManaRestoreTriggerTimer, this, &AWarriorCharacter::ManaRestore, 1.f);
+	GetWorldTimerManager().SetTimer(HealthRestoreTriggerTimer, this, &AWarriorCharacter::HealthRestore, 1.f);*/
+	ManaRestore();
+	HealthRestore();
+	ChangeCharacterTimer();
+	RestoreCharacterChangeValue();
 }
 
 void AWarriorCharacter::MoveForward(float Value) {
@@ -220,14 +228,14 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	PawnNoiseEmitterComponent->MakeNoise(this,1.0f,GetActorLocation());
 	if(CharacterState == ECharacterState::ECS_Warrior)
 	{
-		if((BasicAttackState == EBasicAttackState::EBAS_FirstAttack || BasicAttackState == EBasicAttackState::EBAS_SecondAttack || BasicAttackState == EBasicAttackState::EBAS_ThirdAttack) && (DistanceTargetEnemy < 350) && (TargetEnemy))
+		/*if((BasicAttackState == EBasicAttackState::EBAS_FirstAttack || BasicAttackState == EBasicAttackState::EBAS_SecondAttack || BasicAttackState == EBasicAttackState::EBAS_ThirdAttack) && (DistanceTargetEnemy < 350) && (TargetEnemy))
         	{
         		ClampValue =  FMath::Clamp((Alpha + 0.03f),0,1);
         		Alpha = ClampValue;
         		FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),EnemyTargetLocation);
         		FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
         		GetController()->SetControlRotation(NewRotation);
-        	}
+        	}*/
 	}
 	else
 	{
@@ -302,46 +310,38 @@ void AWarriorCharacter::ArcherBasicAttack(float Value)
 {
 	if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !RainOfArrowUsing &&!ArcherBasicAttackReset && !CharacterChanging && (SwitchCounter == 0 || SwitchCounter == 1))
 	{
-		
 		const USkeletalMeshSocket* ArrowSpawnSocket = GetMesh()->GetSocketByName(FName("ArrowSpawnSocket"));
-		if(ArrowSpawnSocket)
+		if(ArrowSpawnSocket && GetWorld())
 		{
 			const FTransform SocketTransform = ArrowSpawnSocket->GetSocketTransform(GetMesh());
 			FVector ArrowSpawnLocation = SocketTransform.GetLocation();
-			
-			if (GetWorld())
+			CameraManager = Cast<AMyPlayerCameraManager>(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0));
+			if (CameraManager )
 			{
-				CameraManager = Cast<AMyPlayerCameraManager>(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0));
-				if (CameraManager )
+				const FVector CrosshairWorldLocation = CameraManager->GetCameraLocation();
+				const FVector Range{15000,15000,15000};
+				FVector ImpactPoint = (CameraManager->GetActorForwardVector() * Range) + CameraManager->GetCameraLocation();
+				if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !ArcherBasicAttackReset && Value >= 1)
 				{
-					const FVector CrosshairWorldLocation = CameraManager->GetCameraLocation();
-					const FVector Range{15000,15000,15000};
-					FVector ImpactPoint = (CameraManager->GetActorForwardVector() * Range) + CameraManager->GetCameraLocation();
-					if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !ArcherBasicAttackReset && Value >= 1)
+					ArcherCanFire = true;
+					if(ArrowSpeed <= 99)
 					{
-						ArcherCanFire = true;
-						if(ArrowSpeed <= 99)
-						{
-							ArrowSpeed +=1.f;
-							GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, FString::Printf(TEXT(" %f"), ArrowSpeed));
-							CombatState = ECombatState::ECS_FireTimerInProgress;
-						}
-						
+						ArrowSpeed +=1.f;
+						CombatState = ECombatState::ECS_FireTimerInProgress;
 					}
-					if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !ArcherBasicAttackReset && Value < 1  && ArcherCanFire)
+				}
+				if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !ArcherBasicAttackReset && Value < 1  && ArcherCanFire)
+				{
+					FHitResult ArrowTraceHit;
+					GetWorld()->LineTraceSingleByChannel(ArrowTraceHit, CrosshairWorldLocation, ImpactPoint, ECollisionChannel::ECC_Visibility);
+					if(ArrowTraceHit.bBlockingHit)
 					{
-						FHitResult ArrowTraceHit;
-						GetWorld()->LineTraceSingleByChannel(ArrowTraceHit, CrosshairWorldLocation, ImpactPoint, ECollisionChannel::ECC_Visibility);
-						if(ArrowTraceHit.bBlockingHit)
-						{
-							PlayAttackMontage();
-							ImpactPoint = ArrowTraceHit.Location;
-							FRotator ArrowSpanwRotation = (ImpactPoint - ArrowSpawnLocation).Rotation();
-							GetWorld()->SpawnActor<AActor>(ActorToSpawn, ArrowSpawnLocation, ArrowSpanwRotation);
-							ArrowSpeed = 0;
-							ArcherCanFire = false;
-							
-						}
+						PlayAttackMontage();
+						ImpactPoint = ArrowTraceHit.Location;
+						FRotator ArrowSpanwRotation = (ImpactPoint - ArrowSpawnLocation).Rotation();
+						GetWorld()->SpawnActor<AActor>(ActorToSpawn, ArrowSpawnLocation, ArrowSpanwRotation);
+						ArrowSpeed = 0;
+						ArcherCanFire = false;
 					}
 				}
 			}
@@ -368,24 +368,12 @@ void AWarriorCharacter::Jump()
 	
 }
 
-void AWarriorCharacter::TargetOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	AGrux* GruxTarget = Cast<AGrux>(OtherActor);
-	AKhaimera* KhaimeraTarget = Cast<AKhaimera>(OtherActor);
-	if (OtherActor == nullptr) return;
-	GruxTarget = Cast<AGrux>(OtherActor);
-	KhaimeraTarget = Cast<AKhaimera>(OtherActor);
-	if (GruxTarget || KhaimeraTarget) {
-		TargetEnemy = true;
-	}
-}
-
 void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
+	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
 	if(Grux && SwordAttacking && !Grux->GetDied())
 	{
 		const float HitReactChance = FMath::FRandRange(0.f, 1.f);
@@ -394,19 +382,19 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		{
 			if(BasicAttackState == EBasicAttackState::EBAS_FirstAttack && HitReactChance > 0.3f)
 			{
-				AnimInstance->Montage_Play(GruxHitReacts);
+				AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Front"));
 				Grux->SetGruxCombatState(EGruxCombatState::EGCS_FireTimerInProgress);
 			}
 			else if(BasicAttackState == EBasicAttackState::EBAS_SecondAttack && HitReactChance > 0.2f)
 			{
-				AnimInstance->Montage_Play(GruxHitReacts);
+				AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Right"));
 				Grux->SetGruxCombatState(EGruxCombatState::EGCS_FireTimerInProgress);
 			}
 			else if(BasicAttackState == EBasicAttackState::EBAS_ThirdAttack && HitReactChance > 0.1f)
 			{
-				AnimInstance->Montage_Play(GruxHitReacts);
+				AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Left"));
 				Grux->SetGruxCombatState(EGruxCombatState::EGCS_FireTimerInProgress);
 			}
@@ -422,24 +410,53 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		{
 			if(BasicAttackState == EBasicAttackState::EBAS_FirstAttack && HitReactChance > 0.3f)
 			{
-				AnimInstance->Montage_Play(KhaimeraHitReacts);
+				AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Front"));
 				Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
 			}
 			else if(BasicAttackState == EBasicAttackState::EBAS_SecondAttack && HitReactChance > 0.2f)
 			{
-				AnimInstance->Montage_Play(KhaimeraHitReacts);
+				AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Right"));
 				Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
 			}
 			else if(BasicAttackState == EBasicAttackState::EBAS_ThirdAttack && HitReactChance > 0.1f)
 			{
-				AnimInstance->Montage_Play(KhaimeraHitReacts);
+				AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Left"));
 				Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
 			}
 		}
 		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 20.f);
+		SwordAttacking = false;
+	}
+	if(Narbash && SwordAttacking && !Narbash->GetDied() && !Narbash->GetInvincibility())
+	{
+		const float HitReactChance = FMath::FRandRange(0.f, 1.f);
+		UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
+		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
+		{
+			
+			if(BasicAttackState == EBasicAttackState::EBAS_FirstAttack && HitReactChance > 0.3f)
+			{
+				AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
+				AnimInstance->Montage_JumpToSection(FName("Front"));
+				Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
+			}
+			else if(BasicAttackState == EBasicAttackState::EBAS_SecondAttack && HitReactChance > 0.2f)
+			{
+				AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
+				AnimInstance->Montage_JumpToSection(FName("Right"));
+				Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
+			}
+			else if(BasicAttackState == EBasicAttackState::EBAS_ThirdAttack && HitReactChance > 0.1f)
+			{
+				AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
+				AnimInstance->Montage_JumpToSection(FName("Left"));
+				Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
+			}
+		}
+		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 20.f);
 		SwordAttacking = false;
 	}
 }
@@ -449,13 +466,18 @@ void AWarriorCharacter::WarriorFirstSpinOverlap(UPrimitiveComponent* OverlappedC
 {
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
+	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
 	if(Grux && TurnSkillUsing)
 	{
-		Grux->SetGruxHealth(Grux->GetGruxHealth() - 0.025f);
+		Grux->SetGruxHealth(Grux->GetGruxHealth() - 0.050f);
 	}
 	if(Khaimera && TurnSkillUsing)
 	{
-		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 0.025f);
+		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 0.050f);
+	}
+	if(Narbash && TurnSkillUsing && !Narbash->GetInvincibility())
+	{
+		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 0.050f);
 	}
 }
 
@@ -464,24 +486,18 @@ void AWarriorCharacter::WarriorSecondSpinOverlap(UPrimitiveComponent* Overlapped
 {
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
+	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
 	if(Grux  && TurnSkillUsing)
 	{
-		Grux->SetGruxHealth(Grux->GetGruxHealth() - 0.025f);
+		Grux->SetGruxHealth(Grux->GetGruxHealth() - 0.050f);
 	}
 	if(Khaimera  && TurnSkillUsing)
 	{
-		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 0.025f);
+		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 0.050f);
 	}
-}
-
-void AWarriorCharacter::OnTargetEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-                                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	AGrux* TargetCollisionGrux = Cast<AGrux>(OtherActor);
-	AKhaimera* TargetCollisionKhaimera = Cast<AKhaimera>(OtherActor);
-	if(TargetCollisionGrux && TargetCollisionKhaimera)
+	if(Narbash  && TurnSkillUsing && !Narbash->GetInvincibility())
 	{
-		TargetEnemy = false;
+		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 0.050f);
 	}
 }
 
@@ -533,7 +549,6 @@ void AWarriorCharacter::PlayRollMontage(float DeltaTime)
 		}
 		if(CombatState == ECombatState::ECS_Unoccupied)
 		{
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Black,TEXT("qwewqe"));
 			RollClick = 0;
 			GetWorldTimerManager().ClearTimer(ClickTimer);
 			Velocity =  GetCharacterMovement()->Velocity;
@@ -561,7 +576,7 @@ void AWarriorCharacter::PlayAttackMontage()
 		{
 			AnimInstance->Montage_Play(WarriorAttackMontage);
 			AnimInstance->Montage_JumpToSection(FName("FirstBasicAttack"));
-			
+			CombatState = ECombatState::ECS_FireTimerInProgress;
 			WarriorBasicAttackClick = false;
 		}
 	}
@@ -569,9 +584,8 @@ void AWarriorCharacter::PlayAttackMontage()
 
 void AWarriorCharacter::ChangeCharacterFunction()
 {
-	ChangeCharacterFormTime = 5.f;
-	ChangeCharacterFormValue = 100.f;
-	ChangeCharacterTimerFunction();
+	ChangeCharacterFormTime = 30.f;
+	ChangeCharacterFormValue = 0.f;
 	GetWorldTimerManager().ClearTimer(FirstSkillCooldownTimer);
 	GetWorldTimerManager().ClearTimer(SecondSkillCooldownTimer);
 	GetWorldTimerManager().ClearTimer(ThirdSkillCooldownTimer);
@@ -592,13 +606,114 @@ void AWarriorCharacter::ManaRestore()
 	GetWorldTimerManager().SetTimer(ManaRestoreTimer, this, &AWarriorCharacter::ManaRestore, 1.f);
 }
 
-void AWarriorCharacter::ChangeCharacterTimerFunction()
+void AWarriorCharacter::HealthRestore()
 {
-	if(ChangeCharacterFormTime>=1)
+	if(CharacterHealth < 100)
 	{
-		ChangeCharacterFormTime -= 1;
-		GetWorldTimerManager().SetTimer(ChangeCharacterFormTimer, this, &AWarriorCharacter::ChangeCharacterTimerFunction, 1.f);
+		CharacterHealth = CharacterHealth + 0.1f;
 	}
+	else
+	{
+		CharacterHealth = 100;
+	}
+	GetWorldTimerManager().SetTimer(HealthRestoreTimer, this, &AWarriorCharacter::HealthRestore, 1.f);
+}
+
+void AWarriorCharacter::UseHealthPotion()
+{
+	if(HealthPotionAmount >= 1 && HealthPotionCooldown <= 0)
+	{
+		HealthPotionCooldown = 30.f;
+		HealthPotionAmount -= 1.f;
+		UsingHealthPotion();
+	}
+}
+
+void AWarriorCharacter::UseManaPotion()
+{
+	if(ManaPotionAmount >= 1 && ManaPotionCooldown <= 0)
+	{
+		ManaPotionCooldown = 30.f;
+		ManaPotionAmount -= 1.f;
+		UsingManaPotion();
+	}
+}
+
+void AWarriorCharacter::UsingHealthPotion()
+{
+	if(CharacterHealth < 100)
+	{
+		CharacterHealth += 2;
+		if(CharacterHealth >= 100)
+		{
+			CharacterHealth = 100;
+		}
+	}
+	else
+	{
+		CharacterHealth = 100;
+	}
+	if(HealthPotionTriggerAmount <= 5)
+	{
+		FTimerHandle HealthPotionTriggerTimer;
+		GetWorldTimerManager().SetTimer(HealthPotionTriggerTimer, this, &AWarriorCharacter::UsingHealthPotion, 1.f);
+		HealthPotionTriggerAmount++;
+	}
+	else
+	{
+		HealthPotionTriggerAmount = 0;
+	}
+
+}
+
+void AWarriorCharacter::UsingManaPotion()
+{
+	if(CharacterMana < 100)
+	{
+		CharacterMana += 2;
+		if(CharacterMana >= 100)
+		{
+			CharacterMana = 100;
+		}
+	}
+	else
+	{
+		CharacterMana = 100;
+	}
+	if(ManaPotionTriggerAmount <= 5)
+	{
+		FTimerHandle ManaPotionTriggerTimer;
+		GetWorldTimerManager().SetTimer(ManaPotionTriggerTimer, this, &AWarriorCharacter::UsingManaPotion, 1.f);
+		ManaPotionTriggerAmount++;
+	}
+	else
+	{
+		ManaPotionTriggerAmount = 0;
+	}
+}
+
+void AWarriorCharacter::RestoreCharacterChangeValue()
+{
+	if(ChangeCharacterFormValue < 100)
+	{
+		ChangeCharacterFormValue++;
+	}
+	FTimerHandle RestoreTrigger;
+	GetWorldTimerManager().SetTimer(RestoreTrigger,this,&AWarriorCharacter::RestoreCharacterChangeValue,1.f);
+}
+
+void AWarriorCharacter::ChangeCharacterTimer()
+{
+	if(ChangeCharacterFormTime >= 1)
+	{
+		ChangeCharacterFormTime--;
+	}
+	else
+	{
+		ChangeCharacterFormTime = 0;
+	}
+	FTimerHandle TimerTrigger;
+	GetWorldTimerManager().SetTimer(TimerTrigger,this,&AWarriorCharacter::ChangeCharacterTimer,1.f);
 }
 
 void AWarriorCharacter::ClickResetFunction()
@@ -623,8 +738,9 @@ void AWarriorCharacter::FirstSkill()
 			CombatState = ECombatState::ECS_FireTimerInProgress;
 			if(WarriorFirstFXParticle)
 			{
-				CharacterMana -= 5.f;
-				WarriorFirstSkillCooldown = 4.f;
+				Invincibility = true;
+				CharacterMana -= 20.f;
+				WarriorFirstSkillCooldown = 20.f;
 				FVector SpawnLocation(GetActorLocation().X,GetActorLocation().Y,GetActorLocation().Z + 50.f);
 				WarriorFirstFXParticleComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WarriorFirstFXParticle,SpawnLocation + (GetActorForwardVector() * 50.f) ,GetActorRotation());
 				FTimerHandle DestroyFirstSkillTimer;
@@ -651,11 +767,11 @@ void AWarriorCharacter::SecondSkill()
 	{
 		if(CharacterState == ECharacterState::ECS_Warrior && WarriorSecondSkillCooldown <= 0 && CharacterMana >= 20.f)
 		{
+			CombatState = ECombatState::ECS_FireTimerInProgress;
 			CharacterMana -= 20.f;
 			WarriorSecondSkillCooldown = 8.f;
 			AnimInstance->Montage_Play(WarriorCharacterSkillSet);
 			AnimInstance->Montage_JumpToSection(FName("SecondSkill"));
-			CombatState = ECombatState::ECS_FireTimerInProgress;
 			FTimerHandle SpawnSecondSkillTimer;
 			GetWorldTimerManager().SetTimer(SpawnSecondSkillTimer, this, &AWarriorCharacter::PlayWarriorSecondFX, 0.55f);
 			SecondSkillCooldownReset();
@@ -679,7 +795,6 @@ void AWarriorCharacter::SecondSkill()
 
 void AWarriorCharacter::ThirdSkill()
 {
-	
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if(AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging  && !Rolling)
 	{
@@ -849,7 +964,6 @@ void AWarriorCharacter::FourthSkillCooldownReset()
 {
 	if(CharacterState == ECharacterState::ECS_Warrior)
 	{
-		GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Black,TEXT("Oldu"));
 		if(WarriorFourthSkillCooldown >= 1)
 		{
 			
@@ -891,6 +1005,7 @@ void AWarriorCharacter::PlayWarriorSecondFX()
 void AWarriorCharacter::DestroyFirstSkillFX()
 {
 	WarriorFirstFXParticleComponent->DestroyComponent();
+	Invincibility = false;
 }
 
 void AWarriorCharacter::DestroyFourthSkillFX()
@@ -926,6 +1041,8 @@ void AWarriorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("SecondAbility", IE_Pressed, this, &AWarriorCharacter::SecondSkill);
 	PlayerInputComponent->BindAction("ThirdAbility", IE_Pressed, this, &AWarriorCharacter::ThirdSkill);
 	PlayerInputComponent->BindAction("FourthAbility", IE_Pressed, this, &AWarriorCharacter::FourthSkill);
+	PlayerInputComponent->BindAction("HealthPotion", IE_Pressed, this, &AWarriorCharacter::UseHealthPotion);
+	PlayerInputComponent->BindAction("ManaPotion", IE_Pressed, this, &AWarriorCharacter::UseManaPotion);
 }
 
 

@@ -3,6 +3,7 @@
 #include "Fey.h"
 #include "Grux.h"
 #include "Khaimera.h"
+#include "Narbash.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -47,12 +48,13 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	AFey* Fey = Cast<AFey>(OtherActor);
+	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
 	if(Grux)
 	{
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 		{
 			UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(GruxHitReacts);
+			AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
 			Grux->GetCharacterMovement()->MaxWalkSpeed = 0;
 		}
@@ -63,7 +65,7 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 		{
 			UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(KhaimeraHitReacts);
+			AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
 			Khaimera->GetCharacterMovement()->MaxWalkSpeed = 0;
 		}
@@ -74,11 +76,22 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 		if(Fey->GetFeyCombatState() == EFeyCombatState::EFCS_Unoccupied)
 		{
 			UAnimInstance* AnimInstance = Fey->GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(FeyHitReacts);
+			AnimInstance->Montage_Play(Fey->GetFeyHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
 			Fey->GetCharacterMovement()->MaxWalkSpeed = 0;
 		}
 		Fey->SetFeyHealth(Fey->GetFeyHealth() - 5.f);
+	}
+	if(Narbash && !Narbash->GetInvincibility())
+	{
+		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
+		{
+			UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
+			AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
+			AnimInstance->Montage_JumpToSection(FName("Front"));
+			Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
+		}
+		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 5.f);
 	}
 }
 

@@ -76,12 +76,15 @@ private:
 	TSubclassOf<AActor> MagicBallToSpawn;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UParticleSystem* AttackParticle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* FeyHitReacts;
 
 
 public:
 	FORCEINLINE bool GetDied() const { return bFeyDied; }
 	FORCEINLINE void SetFeyHealth(float NewFeyHealth) { FeyHealth = NewFeyHealth; }
 	FORCEINLINE float GetFeyHealth() const { return FeyHealth; }
+	FORCEINLINE UAnimMontage* GetFeyHitReacts() const { return FeyHitReacts; }
 	FORCEINLINE EFeyCombatState GetFeyCombatState() const { return FeyCombatState; }
 	FORCEINLINE void SetFeyCombatState(EFeyCombatState NewFeyCombatState) { FeyCombatState = NewFeyCombatState; }
 	FORCEINLINE void SetFeyDied(bool NewFeyDied) { bFeyDied = NewFeyDied; }

@@ -52,8 +52,23 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character)
 	{
-		Destroy();
-		Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+		if(!Character->GetInvincibility())
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+			if(Character->GetCharacterHealth() <= 0)
+			{
+				Character->SetCharacterHealth(0);
+			}
+		}
+		else
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5);
+			if(Character->GetCharacterHealth() >= 100)
+			{
+				Character->SetCharacterHealth(100);
+			}
+		}
+		
 		const FVector SpawnLocation(Character->GetActorLocation().X, Character->GetActorLocation().Y, Character->GetActorLocation().Z + 40.f);
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitParticle,SpawnLocation ,GetActorRotation());
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
@@ -65,13 +80,11 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 				{
 					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
 					AnimInstance->Montage_JumpToSection(FName("Front"));
-					GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Black,TEXT("ÖN"));
 				}
 				else
 				{
 					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
 					AnimInstance->Montage_JumpToSection(FName("Back"));
-					GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Black,TEXT("ÖN"));
 				}
 				Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
 			}
@@ -90,6 +103,7 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 				Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
 			}
 		}
+		Destroy();
 	}
 }
 

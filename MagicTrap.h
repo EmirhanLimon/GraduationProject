@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Grux.h"
 #include "Khaimera.h"
+#include "Narbash.h"
 #include "GameFramework/Actor.h"
 #include "WarriorCharacter.h"
 #include "MagicTrap.generated.h"
@@ -42,4 +43,6 @@ private:
 	AGrux* Grux;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess))
 	AKhaimera* Khaimera;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess))
+	ANarbash* Narbash;
 };

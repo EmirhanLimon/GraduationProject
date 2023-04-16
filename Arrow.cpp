@@ -5,6 +5,7 @@
 
 #include "Grux.h"
 #include "Khaimera.h"
+#include "Narbash.h"
 #include "NavigationSystemTypes.h"
 #include "Engine/LODActor.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -102,6 +103,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	AFey* Fey = Cast<AFey>(OtherActor);
+	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
 	if(OtherActor != this)
 	{
 		if(Grux && !Grux->GetDied())
@@ -121,7 +123,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 			{
 				UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(GruxHitReacts);
+				AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Front"));
 				Grux->SetGruxCombatState(EGruxCombatState::EGCS_FireTimerInProgress);
 				Grux->GetCharacterMovement()->MaxWalkSpeed = 0;
@@ -144,10 +146,33 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 			{
 				UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(KhaimeraHitReacts);
+				AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Front"));
 				Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
 				Khaimera->GetCharacterMovement()->MaxWalkSpeed = 0;
+			}
+		}
+		if(Narbash && !Narbash->GetDied() && !Narbash->GetInvincibility())
+		{
+			if(Character->GetSwitchCounter() == 1)
+			{
+				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - (25.f + (Character->ArrowSpeed / 10)));
+			}
+			else if(Character->GetSwitchCounter() == 2)
+			{
+				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 30.f);
+			}
+			else
+			{
+				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - (10.f + (Character->ArrowSpeed / 10)));
+			}
+			if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
+			{
+				UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
+				AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
+				AnimInstance->Montage_JumpToSection(FName("Front"));
+				Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
+				Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
 			}
 		}
 		if(Fey && !Fey->GetDied())
@@ -167,7 +192,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			if(Fey->GetFeyCombatState() == EFeyCombatState::EFCS_Unoccupied)
 			{
 				UAnimInstance* AnimInstance = Fey->GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(FeyHitReacts);
+				AnimInstance->Montage_Play(Fey->GetFeyHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Front"));
 				Fey->SetFeyCombatState(EFeyCombatState::EFCS_FireTimerInProgress);
 				Fey->GetCharacterMovement()->MaxWalkSpeed = 0;

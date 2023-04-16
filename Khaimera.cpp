@@ -64,7 +64,6 @@ void AKhaimera::OnHearNoise(APawn* OtherActor, const FVector& Location, float Vo
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && KhaimeraCombatState == EKhaimeraCombatState::EKCS_Unoccupied && !bKhaimeraDied && !bKhaimeraStunned)
 	{
-		GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("1231"));
 		AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
 		GetWorldTimerManager().ClearTimer(PatrolTimer);
 		GetCharacterMovement()->MaxWalkSpeed = 800;
@@ -120,7 +119,23 @@ void AKhaimera::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && bCanDoDamageLeftWeapon && !bKhaimeraDied && !bKhaimeraStunned)
 	{
-		Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+		if(!Character->GetInvincibility())
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+			if(Character->GetCharacterHealth() <= 0)
+			{
+				Character->SetCharacterHealth(0);
+			}
+		}
+		else
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5);
+			if(Character->GetCharacterHealth() >= 100)
+			{
+				Character->SetCharacterHealth(100);
+			}
+		}
+		
 		bCanDoDamageLeftWeapon = false;
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
@@ -165,7 +180,22 @@ void AKhaimera::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && bCanDoDamageRightWeapon && !bKhaimeraDied && !bKhaimeraStunned)
 	{
-		Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+		if(!Character->GetInvincibility())
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+			if(Character->GetCharacterHealth() <= 0)
+			{
+				Character->SetCharacterHealth(0);
+			}
+		}
+		else
+		{
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5);
+			if(Character->GetCharacterHealth() >= 100)
+			{
+				Character->SetCharacterHealth(100);
+			}
+		}
 		bCanDoDamageRightWeapon = false;
 	}
 }
@@ -179,7 +209,6 @@ void AKhaimera::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		bCombatRange = true;
 		if(bCombatRange)
 		{
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("sdada"));
 			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 			const float KhaimeraAttackChance = FMath::FRandRange(0.f,1.f);
 			GetCharacterMovement()->MaxWalkSpeed = 0;

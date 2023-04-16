@@ -4,6 +4,7 @@
 #include "EarthSlam.h"
 #include "Khaimera.h"
 #include "Grux.h"
+#include "Narbash.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -37,12 +38,13 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 {
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
+	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
 	if(Grux)
 	{
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 		{
 			UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(GruxHitReacts);
+			AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
 			Grux->GetCharacterMovement()->MaxWalkSpeed = 0;
 		}
@@ -54,11 +56,23 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 		{
 			UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
-			AnimInstance->Montage_Play(KhaimeraHitReacts);
+			AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
 			Khaimera->GetCharacterMovement()->MaxWalkSpeed = 0;
 		}
 		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 30.f);
+		Destroy();
+	}
+	if(Narbash && !Narbash->GetInvincibility())
+	{
+		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
+		{
+			UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
+			AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
+			AnimInstance->Montage_JumpToSection(FName("Front"));
+			Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
+		}
+		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 30.f);
 		Destroy();
 	}
 	FTimerHandle DestroyTimer;

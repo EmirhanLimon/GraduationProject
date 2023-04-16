@@ -56,15 +56,11 @@ protected:
 	void WarriorBasicAttack();
 	virtual void Jump() override;
 	UFUNCTION()
-	void TargetOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
 	void WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 	void WarriorFirstSpinOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 	void WarriorSecondSpinOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnTargetEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	UFUNCTION()
 	void BehindOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
@@ -84,7 +80,6 @@ private:
 	void SpeedBoostCooldownTimerFunction();
 	void ClickResetFunction();
 	void RollResetFunction();
-	void ChangeCharacterTimerFunction();
 	void PlayRollMontage(float DeltaTime);
 	void PlayAttackMontage();
 	void PlayWarriorThirdFX();
@@ -100,6 +95,13 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void ChangeCharacterFunction();
 	void ManaRestore();
+	void HealthRestore();
+	void UseHealthPotion();
+	void UseManaPotion();
+	void UsingHealthPotion();
+	void UsingManaPotion();
+	void RestoreCharacterChangeValue();
+	void ChangeCharacterTimer();
 	FTimerHandle SpeedBoostCooldownTimer;
 	FTimerHandle ClickTimer;
 	FTimerHandle RollResetTimer;
@@ -111,6 +113,7 @@ private:
 	FTimerHandle ThirdSkillCooldownTimer;
 	FTimerHandle FourthSkillCooldownTimer;
 	FTimerHandle ManaRestoreTimer;
+	FTimerHandle HealthRestoreTimer;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -165,8 +168,6 @@ private:
 		bool RainOfArrowUsing;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		bool ReinforcedArrowUsing;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		bool TargetEnemy;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool GruxRendered;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -174,11 +175,15 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool KhaimeraRendered;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool NarbashRendered;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool FastArrowFire;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool SwordAttacking;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool Invincibility;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool InSafeZone;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		int32 RollClick;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -201,10 +206,6 @@ private:
 		UAnimMontage* WarriorCharacterSkillSet;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* ArcherSkillSet;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* GruxHitReacts;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
-		UAnimMontage* KhaimeraHitReacts;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* WarriorCharacterHitReacts;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -274,6 +275,18 @@ private:
 		UPawnNoiseEmitterComponent* PawnNoiseEmitterComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		class UBoxComponent* BehindCollision;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float HealthPotionAmount;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float ManaPotionAmount;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float HealthPotionCooldown;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		float ManaPotionCooldown;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		uint8 HealthPotionTriggerAmount;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		uint8 ManaPotionTriggerAmount;
 	
 public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -281,6 +294,8 @@ public:
 	FORCEINLINE uint8 GetSwitchCounter() const { return SwitchCounter; }
 	FORCEINLINE FVector GetEnemyTargetLocation() const { return EnemyTargetLocation; }
 	FORCEINLINE float GetCharacterHealth() const { return CharacterHealth; }
+	FORCEINLINE float GetHealthPotionAmount() const { return HealthPotionAmount; }
+	FORCEINLINE float GetManaPotionAmount() const { return ManaPotionAmount; }
 	FORCEINLINE bool GetSpeedBoost() const { return bSpeedBoost; }
 	FORCEINLINE bool GetThunderStormSpawned() const { return ThunderStormSpawned; }
 	FORCEINLINE bool GetRainOfArrowUsing() const { return RainOfArrowUsing; }
@@ -288,6 +303,9 @@ public:
 	FORCEINLINE bool GetRolling() const { return Rolling; }
 	FORCEINLINE bool GetCharacterChanging() const { return CharacterChanging; }
 	FORCEINLINE bool GetFeyRendered() const { return FeyRendered; }
+	FORCEINLINE bool GetNarbashRendered() const { return NarbashRendered; }
+	FORCEINLINE bool GetInvincibility() const { return Invincibility; }
+	FORCEINLINE bool GetSafeZone() const { return InSafeZone; }
 	FORCEINLINE UAnimMontage* GetWarriorCharacterHitReacts() const { return WarriorCharacterHitReacts; }
 	FORCEINLINE UAnimMontage* GetArcherCharacterHitReacts() const { return ArcherCharacterHitReacts; }
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
@@ -297,7 +315,11 @@ public:
 	FORCEINLINE void SetGruxRendered(bool NewGruxRendered) { GruxRendered = NewGruxRendered; }
 	FORCEINLINE void SetKhaimeraRendered(bool NewKhaimeraRendered) { KhaimeraRendered = NewKhaimeraRendered; }
 	FORCEINLINE void SetFeyRendered(bool NewFeyRendered) { FeyRendered = NewFeyRendered; }
+	FORCEINLINE void SetNarbashRendered(bool NewNarbashRendered) { NarbashRendered = NewNarbashRendered; }
 	FORCEINLINE void SetSwitchCounter(uint8 NewSwitchCounter) { SwitchCounter = NewSwitchCounter; }
 	FORCEINLINE void SetCharacterHealth(float NewCharacterHealth) { CharacterHealth = NewCharacterHealth; }
 	FORCEINLINE void SetCombatState(ECombatState NewCombatState) { CombatState = NewCombatState; }
+	FORCEINLINE void SetHealthPotionAmount(float NewHealthPotionAmount) { HealthPotionAmount = NewHealthPotionAmount; }
+	FORCEINLINE void SetManaPotionAmount(float NewManaPotionAmount) { ManaPotionAmount = NewManaPotionAmount; }
+	FORCEINLINE void SetSafeZone(bool NewInSafeZone) { InSafeZone = NewInSafeZone; }
 };
