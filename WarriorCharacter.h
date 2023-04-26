@@ -102,6 +102,7 @@ private:
 	void UsingManaPotion();
 	void RestoreCharacterChangeValue();
 	void ChangeCharacterTimer();
+
 	FTimerHandle SpeedBoostCooldownTimer;
 	FTimerHandle ClickTimer;
 	FTimerHandle RollResetTimer;
@@ -306,6 +307,7 @@ public:
 	FORCEINLINE bool GetNarbashRendered() const { return NarbashRendered; }
 	FORCEINLINE bool GetInvincibility() const { return Invincibility; }
 	FORCEINLINE bool GetSafeZone() const { return InSafeZone; }
+	FORCEINLINE AMyPlayerCameraManager* GetCameraManager() const { return CameraManager; }
 	FORCEINLINE UAnimMontage* GetWarriorCharacterHitReacts() const { return WarriorCharacterHitReacts; }
 	FORCEINLINE UAnimMontage* GetArcherCharacterHitReacts() const { return ArcherCharacterHitReacts; }
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }

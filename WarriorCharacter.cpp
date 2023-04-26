@@ -140,6 +140,7 @@ void AWarriorCharacter::BeginPlay()
 	Super::BeginPlay();
 	SpeedBoostCooldownTimerFunction();
 	
+	CameraManager = Cast<AMyPlayerCameraManager>(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0));
 	WarriorWeaponCollision->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::WarriorWeaponOverlap);
 	TurnCollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::WarriorFirstSpinOverlap);
 	TurnCollisionSphere2->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::WarriorSecondSpinOverlap);
@@ -315,7 +316,7 @@ void AWarriorCharacter::ArcherBasicAttack(float Value)
 		{
 			const FTransform SocketTransform = ArrowSpawnSocket->GetSocketTransform(GetMesh());
 			FVector ArrowSpawnLocation = SocketTransform.GetLocation();
-			CameraManager = Cast<AMyPlayerCameraManager>(UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0));
+
 			if (CameraManager )
 			{
 				const FVector CrosshairWorldLocation = CameraManager->GetCameraLocation();
