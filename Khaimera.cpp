@@ -191,6 +191,10 @@ void AKhaimera::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 				Character->SetCharacterHealth(100);
 			}
 		}
+		if(Character->GetBloodFXParticle())
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Character->GetBloodFXParticle(),Character->GetActorLocation(),FRotator(0,0,0));
+		}
 		
 		bCanDoDamageLeftWeapon = false;
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
@@ -255,6 +259,10 @@ void AKhaimera::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 			{
 				Character->SetCharacterHealth(100);
 			}
+		}
+		if(Character->GetBloodFXParticle())
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Character->GetBloodFXParticle(),Character->GetActorLocation(),FRotator(0,0,0));
 		}
 		bCanDoDamageRightWeapon = false;
 	}

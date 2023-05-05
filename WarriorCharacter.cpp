@@ -404,6 +404,10 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		}
 		Grux->SetGruxHealth(Grux->GetGruxHealth() - 20.f);
 		SwordAttacking = false;
+		if(BloodFXParticle)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),BloodFXParticle,Grux->GetActorLocation() + (Grux->GetActorForwardVector() * 50.f),FRotator(0,0,0));
+		}
 	}
 	if(Khaimera && SwordAttacking && !Khaimera->GetDied())
 	{
@@ -429,6 +433,10 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 				AnimInstance->Montage_JumpToSection(FName("Left"));
 				Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
 			}
+		}
+		if(BloodFXParticle)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),BloodFXParticle,Khaimera->GetActorLocation() + (Khaimera->GetActorForwardVector() * 50.f),FRotator(0,0,0));
 		}
 		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 20.f);
 		SwordAttacking = false;
@@ -458,6 +466,10 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 				AnimInstance->Montage_JumpToSection(FName("Left"));
 				Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
 			}
+		}
+		if(BloodFXParticle)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),BloodFXParticle,Narbash->GetActorLocation() + (Narbash->GetActorForwardVector() * 50.f),FRotator(0,0,0));
 		}
 		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 20.f);
 		SwordAttacking = false;

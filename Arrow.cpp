@@ -155,6 +155,10 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 				Grux->GetPawnSensingComponent()->HearingThreshold = 10000;
 				Grux->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
 			}
+			if(Character->GetBloodFXParticle())
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),Character->GetBloodFXParticle(),Grux->GetActorLocation() + (Grux->GetActorForwardVector() * 50.f),FRotator(0,0,0));
+			}
 		}
 		if(Khaimera && !Khaimera->GetDied())
 		{
@@ -182,6 +186,10 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			{
 				Khaimera->GetPawnSensingComponent()->HearingThreshold = 10000;
 				Khaimera->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
+			}
+			if(Character->GetBloodFXParticle())
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),Character->GetBloodFXParticle(),Khaimera->GetActorLocation() + (Khaimera->GetActorForwardVector() * 50.f),FRotator(0,0,0));
 			}
 		}
 		if(Narbash && !Narbash->GetDied() && !Narbash->GetInvincibility())
@@ -211,6 +219,10 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 				Narbash->GetPawnSensingComponent()->HearingThreshold = 10000;
 				Narbash->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
 			}
+			if(Character->GetBloodFXParticle())
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),Character->GetBloodFXParticle(),Narbash->GetActorLocation() + (Narbash->GetActorForwardVector() * 50.f),FRotator(0,0,0));
+			}
 		}
 		if(Fey && !Fey->GetDied())
 		{
@@ -238,6 +250,10 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			{
 				Fey->GetPawnSensingComponent()->HearingThreshold = 10000;
 				Fey->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
+			}
+			if(Character->GetBloodFXParticle())
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),Character->GetBloodFXParticle(),Fey->GetActorLocation() + (Fey->GetActorForwardVector() * 50.f),FRotator(0,0,0));
 			}
 		}
 		

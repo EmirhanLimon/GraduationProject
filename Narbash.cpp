@@ -127,6 +127,10 @@ void ANarbash::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 			{
 				Character->SetCharacterHealth(0);
 			}
+			if(Character->GetBloodFXParticle())
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Character->GetBloodFXParticle(),Character->GetActorLocation(),FRotator(0,0,0));
+			}
 		}
 		else
 		{
@@ -190,6 +194,10 @@ void ANarbash::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
+			}
+			if(Character->GetBloodFXParticle())
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Character->GetBloodFXParticle(),Character->GetActorLocation(),FRotator(0,0,0));
 			}
 		}
 		else
@@ -399,7 +407,7 @@ void ANarbash::Tick(float DeltaTime)
 	else
 	{
 		CombatRangeDistance = FVector::Distance(GetActorLocation(),Character->GetActorLocation());
-		if(CombatRangeDistance < 250.f)
+		if(CombatRangeDistance < 175.f)
 		{
 			bCombatRange = true;
 			CombatRange();

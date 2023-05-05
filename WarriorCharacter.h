@@ -253,6 +253,8 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UParticleSystem* WarriorFirstFXParticle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		UParticleSystem* BloodFXParticle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UParticleSystemComponent* WarriorFirstFXParticleComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UParticleSystemComponent* WarriorFourthFXParticleComponent;
@@ -341,6 +343,7 @@ public:
 	FORCEINLINE AMyPlayerCameraManager* GetCameraManager() const { return CameraManager; }
 	FORCEINLINE UAnimMontage* GetWarriorCharacterHitReacts() const { return WarriorCharacterHitReacts; }
 	FORCEINLINE UAnimMontage* GetArcherCharacterHitReacts() const { return ArcherCharacterHitReacts; }
+	FORCEINLINE UParticleSystem* GetBloodFXParticle() const { return BloodFXParticle; }
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 	FORCEINLINE EWaveState GetWaveState() const { return WaveState; }

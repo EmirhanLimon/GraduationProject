@@ -188,6 +188,10 @@ void AGrux::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 				Character->SetCharacterHealth(100);
 			}
 		}
+		if(Character->GetBloodFXParticle())
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Character->GetBloodFXParticle(),Character->GetActorLocation(),FRotator(0,0,0));
+		}
 		bCanDoDamageLeftWeapon = false;
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
@@ -238,6 +242,10 @@ void AGrux::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	{
 		Character->SetCharacterHealth(Character->GetCharacterHealth() - 3);
 		bCanDoDamageRightWeapon = false;
+		if(Character->GetBloodFXParticle())
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Character->GetBloodFXParticle(),Character->GetActorLocation(),FRotator(0,0,0));
+		}
 	}
 }
 
