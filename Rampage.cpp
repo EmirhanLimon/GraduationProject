@@ -18,7 +18,8 @@ ARampage::ARampage() :
 	bJumping(false),
 	bCanAttack(true),
 	bLeftArmCanDamage(false),
-	bRightArmCanDamage(false)
+	bRightArmCanDamage(false),
+	RampageHealth(750.f)
 {
 
 	PrimaryActorTick.bCanEverTick = true;

@@ -33,8 +33,8 @@ ANarbash::ANarbash() :
 
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
-	CombatRangeSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CombatRangeSphereComponent"));
-	CombatRangeSphereComponent->SetupAttachment(GetRootComponent());
+	//CombatRangeSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CombatRangeSphereComponent"));
+	//CombatRangeSphereComponent->SetupAttachment(GetRootComponent());
 
 	LeftWeaponCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftWeaponCollision"));
 	LeftWeaponCollision->SetupAttachment(GetMesh(), FName("weapon_l"));
@@ -62,8 +62,8 @@ void ANarbash::BeginPlay()
 
 	LeftWeaponCollision->OnComponentBeginOverlap.AddDynamic(this, &ANarbash::LeftWeaponOverlap);
 	RightWeaponCollision->OnComponentBeginOverlap.AddDynamic(this, &ANarbash::RightWeaponOverlap);
-	CombatRangeSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ANarbash::CombatRangeOverlap);
-	CombatRangeSphereComponent->OnComponentEndOverlap.AddDynamic(this, &ANarbash::CombatRangeOverlapEnd);
+	//CombatRangeSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ANarbash::CombatRangeOverlap);
+	//CombatRangeSphereComponent->OnComponentEndOverlap.AddDynamic(this, &ANarbash::CombatRangeOverlapEnd);
 	AuraParticleSystemComponent->SetVisibility(false);
 	
 }
@@ -205,10 +205,8 @@ void ANarbash::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	}
 }
 
-void ANarbash::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ANarbash::CombatRange()
 {
-	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && !bNarbashDied && !bInvincibility)
 	{
 		bCombatRange = true;
@@ -239,7 +237,7 @@ void ANarbash::CombatRangeOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	}
 }
 
-void ANarbash::CombatRangeOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+/*void ANarbash::CombatRangeOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	Character = Cast<AWarriorCharacter>(OtherActor);
@@ -247,19 +245,27 @@ void ANarbash::CombatRangeOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor
 	{
 		bCombatRange = false;
 	}
-}
+}*/
 
 void ANarbash::ThrowHammer()
 {
 	if(!IsValid(Character))
 	{
 		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		if(Character)
+		{
+			FVector FXSpawnLocation(Character->GetActorLocation().X,Character->GetActorLocation().Y,Character->GetActorLocation().Z + 500.f);
+			FRotator FXSpawnRotation(0,-90,0);
+			GetWorld()->SpawnActor<AActor>(ThrowHammertoSpawn, FXSpawnLocation, FXSpawnRotation);
+			GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Red,TEXT("SpawnOldu"));
+		}
 	}
 	else
 	{
 		FVector FXSpawnLocation(Character->GetActorLocation().X,Character->GetActorLocation().Y,Character->GetActorLocation().Z + 500.f);
 		FRotator FXSpawnRotation(0,-90,0);
 		GetWorld()->SpawnActor<AActor>(ThrowHammertoSpawn, FXSpawnLocation, FXSpawnRotation);
+		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Red,TEXT("SpawnOldu"));
 	}
 }
 
@@ -386,6 +392,23 @@ void ANarbash::SpawnSafeZone()
 void ANarbash::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
+	{
+		CombatRangeDistance = FVector::Distance(GetActorLocation(),Character->GetActorLocation());
+		if(CombatRangeDistance < 250.f)
+		{
+			bCombatRange = true;
+			CombatRange();
+		}
+		else
+		{
+			bCombatRange = false;
+		}
+	}
 	if(Character && !bNarbashDied)
 	{
 		if(WasRecentlyRendered(0.2f))

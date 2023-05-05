@@ -96,7 +96,6 @@ void AHammer::HammerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 				}
 				Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
 			}
-			
 		}
 		Destroyed();
 	}
@@ -113,6 +112,6 @@ void AHammer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if(Character)
 	{
-		SetActorLocation(FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 2.f));
+		//SetActorLocation(FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 2.f));
 	}
 }

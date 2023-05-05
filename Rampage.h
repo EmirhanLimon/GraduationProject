@@ -95,6 +95,8 @@ private:
 	class UBoxComponent* LeftArmBoxComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* RightArmBoxComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float RampageHealth;
 
 
 public:
