@@ -236,7 +236,14 @@ void ARampage::Tick(float DeltaTime)
 	}
 	if(Character)
 	{
-
+		if(WasRecentlyRendered(0.2f))
+		{
+			Character->SetRampageRendered(true);
+		}
+		else
+		{
+			Character->SetRampageRendered(false);
+		}
 		Distance = FVector::Distance(GetActorLocation(),Character->GetActorLocation());
 		if(bIsInAir)
 		{

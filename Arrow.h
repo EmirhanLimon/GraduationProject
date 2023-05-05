@@ -22,6 +22,7 @@ public:
 protected:
 	
 	virtual void BeginPlay() override;
+	void StartCameraShake();
 
 public:	
 	
@@ -54,4 +55,6 @@ private:
 	UAnimMontage* KhaimeraHitReacts;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TArray<AActor*> deneme;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UCameraShakeBase> CameraShakeArcherAttack;
 };

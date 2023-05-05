@@ -73,6 +73,10 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitParticle,SpawnLocation ,GetActorRotation());
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
 		{
+			if(Character->GetCameraManager())
+			{
+				Character->GetCameraManager()->StartCameraShake(Character->GetCameraShakeHitReact(),1);
+			}
 			UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
 			{

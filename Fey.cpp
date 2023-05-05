@@ -42,16 +42,24 @@ void AFey::OnHearNoise(APawn* OtherActor, const FVector& Location, float Volume)
 {
 	if(OtherActor == nullptr) return;
 	Character = Cast<AWarriorCharacter>(OtherActor);
-	if(Character && FeyCombatState == EFeyCombatState::EFCS_Unoccupied && !bCombatRange && !bFeyDied)
+	if(!IsValid(AIC_Ref))
 	{
-		FVector CharacterLocation(Character->GetActorLocation().X, Character->GetActorLocation().Y ,Character->GetActorLocation().Z + 200.f);
-		AIC_Ref->MoveToLocation(CharacterLocation, -1.f,true,false);
-		GetCharacterMovement()->MaxFlySpeed = 900;
+		AIC_Ref = Cast<AEnemyController>(GetController());
 	}
 	else
 	{
-		AIC_Ref->StopMovement();
+		if(Character && FeyCombatState == EFeyCombatState::EFCS_Unoccupied && !bCombatRange && !bFeyDied)
+		{
+			FVector CharacterLocation(Character->GetActorLocation().X, Character->GetActorLocation().Y ,Character->GetActorLocation().Z + 200.f);
+			AIC_Ref->MoveToLocation(CharacterLocation, -1.f,true,false);
+			GetCharacterMovement()->MaxFlySpeed = 900;
+		}
+		else
+		{
+			AIC_Ref->StopMovement();
+		}
 	}
+	
 }
 
 void AFey::CombatRange()
@@ -113,6 +121,7 @@ void AFey::Die()
 	}
 	FTimerHandle DieTimer;
 	GetWorldTimerManager().SetTimer(DieTimer, this, &AFey::Destroyed, 1.8f);
+
 }
 
 void AFey::SpawnMagicBallLeft()
@@ -156,8 +165,18 @@ void AFey::Attack()
 	
 }
 
+void AFey::Deneme()
+{
+	
+}
+
 void AFey::Destroyed()
 {
+	if(Character)
+	{
+		GEngine->AddOnScreenDebugMessage(-1,4.f,FColor::Cyan,TEXT("aaa"));
+		Character->SetAmountOfDeadEnemies(Character->GetAmountOfDeadEnemies() + 0.5f);
+	}
 	Destroy();
 }
 
@@ -194,6 +213,7 @@ void AFey::Tick(float DeltaTime)
 		bFeyDied = true;
 		FeyHealth = 0;
 		Die();
+		Deneme();
 	}
 }
 

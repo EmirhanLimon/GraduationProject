@@ -36,6 +36,7 @@ public:
 	void SpawnMagicBallLeft();
 	void SpawnMagicBallRight();
 	void Attack();
+	void Deneme();
 	virtual void Destroyed() override;
 protected:
 
@@ -84,6 +85,7 @@ public:
 	FORCEINLINE bool GetDied() const { return bFeyDied; }
 	FORCEINLINE void SetFeyHealth(float NewFeyHealth) { FeyHealth = NewFeyHealth; }
 	FORCEINLINE float GetFeyHealth() const { return FeyHealth; }
+	FORCEINLINE UPawnSensingComponent* GetPawnSensingComponent() const { return PawnSensing; }
 	FORCEINLINE UAnimMontage* GetFeyHitReacts() const { return FeyHitReacts; }
 	FORCEINLINE EFeyCombatState GetFeyCombatState() const { return FeyCombatState; }
 	FORCEINLINE void SetFeyCombatState(EFeyCombatState NewFeyCombatState) { FeyCombatState = NewFeyCombatState; }

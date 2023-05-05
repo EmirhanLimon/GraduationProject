@@ -86,11 +86,13 @@ private:
 		UAnimMontage* GruxDieMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* GruxHitReacts;
+
 public:
 	FORCEINLINE void SetGruxStunned(bool NewGruxStunned) { bGruxStunned = NewGruxStunned; }
 	FORCEINLINE bool GetGruxStunned() const { return bGruxStunned; }
 	FORCEINLINE bool GetDied() const { return bGruxDied; }
 	FORCEINLINE UAnimMontage* GetGruxHitReacts() const { return GruxHitReacts; }
+	FORCEINLINE UPawnSensingComponent* GetPawnSensingComponent() const { return GruxPawnSensing; }
 	FORCEINLINE void SetGruxHealth(float NewGruxHealth) { GruxHealth = NewGruxHealth; }
 	FORCEINLINE float GetGruxHealth() const { return GruxHealth; }
 	FORCEINLINE EGruxCombatState GetGruxCombatState() const { return GruxCombatState; }

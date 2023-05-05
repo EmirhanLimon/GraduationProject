@@ -59,11 +59,18 @@ void AGrux::OnHearNoise(APawn* OtherActor, const FVector& Location, float Volume
 {
 	if(OtherActor == nullptr) return;
 	Character = Cast<AWarriorCharacter>(OtherActor);
-	if(Character && GruxCombatState == EGruxCombatState::EGCS_Unoccupied && !bGruxDied && !bGruxStunned)
+	if(Character && GruxCombatState == EGruxCombatState::EGCS_Unoccupied && !bGruxDied && !bGruxStunned && AIC_Ref)
 	{
-		AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
-		GetWorldTimerManager().ClearTimer(PatrolTimer);
-		GetCharacterMovement()->MaxWalkSpeed = 600;
+		if(!IsValid(AIC_Ref))
+		{
+			AIC_Ref = Cast<AEnemyController>(GetController());
+		}
+		else
+		{
+			AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
+			GetWorldTimerManager().ClearTimer(PatrolTimer);
+			GetCharacterMovement()->MaxWalkSpeed = 600;
+		}
 	}
 }
 
@@ -74,11 +81,26 @@ void AGrux::Patrol()
 	{
 		FNavLocation NavLoc;
 		NavSys->GetRandomReachablePointInRadius(GetActorLocation(), 1500.f, NavLoc);
-		if (AIC_Ref && !bCombatRange && !bGruxDied && !bGruxStunned)
+		if(!IsValid(AIC_Ref))
 		{
-			AIC_Ref->MoveToLocation(NavLoc);
-			GetWorldTimerManager().SetTimer(PatrolTimer, this, &AGrux::Patrol, 7.5f);
-			GetCharacterMovement()->MaxWalkSpeed = 400;
+			AIC_Ref = Cast<AEnemyController>(GetController());
+			if (!bCombatRange && !bGruxDied && !bGruxStunned && AIC_Ref)
+			{
+				AIC_Ref->MoveToLocation(NavLoc);
+				GetWorldTimerManager().SetTimer(PatrolTimer, this, &AGrux::Patrol, 7.5f);
+				GetCharacterMovement()->MaxWalkSpeed = 400;
+				GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Black,TEXT("1"));
+			}
+		}
+		else
+		{
+			if (!bCombatRange && !bGruxDied && !bGruxStunned)
+			{
+				AIC_Ref->MoveToLocation(NavLoc);
+				GetWorldTimerManager().SetTimer(PatrolTimer, this, &AGrux::Patrol, 7.5f);
+				GetCharacterMovement()->MaxWalkSpeed = 400;
+				GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Black,TEXT("2"));
+			}
 		}
 	}
 }
@@ -106,6 +128,41 @@ void AGrux::Die()
 
 void AGrux::Destroyed()
 {
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		/*if(Character)
+		{
+			Character->SetAmountOfDeadEnemies(Character->GetAmountOfDeadEnemies() + 1);
+			const float RandomPotion = FMath::FRandRange(0.f,1.f);
+			if(RandomPotion < 0.5f)
+			{
+				GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("Mana İksiri"));
+				GetWorld()->SpawnActor<AActor>(Character->GetManaPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("Can İksiri"));
+				GetWorld()->SpawnActor<AActor>(Character->GetHealthPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+			}
+		}*/
+	}
+	else
+	{
+		Character->SetAmountOfDeadEnemies(Character->GetAmountOfDeadEnemies() + 1);
+		const float RandomPotion = FMath::FRandRange(0.f,1.f);
+		if(RandomPotion < 0.5f)
+		{
+			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("Mana İksiri"));
+			GetWorld()->SpawnActor<AActor>(Character->GetManaPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("Can İksiri"));
+			GetWorld()->SpawnActor<AActor>(Character->GetHealthPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+		}
+		
+	}
 	Destroy();
 }
 
@@ -135,6 +192,10 @@ void AGrux::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
 		{
+			if(Character->GetCameraManager())
+			{
+				Character->GetCameraManager()->StartCameraShake(Character->GetCameraShakeHitReact(),1);
+			}
 			const float HitReacts = FMath::RandRange(0.f, 1.f);
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior && HitReacts <= 0.5f)
 			{
@@ -241,6 +302,7 @@ void AGrux::CombatRangeOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* O
 void AGrux::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	if(Character && !bGruxDied)
 	{
 		if(WasRecentlyRendered(0.2f))
@@ -249,6 +311,7 @@ void AGrux::Tick(float DeltaTime)
 		}
 		else
 		{
+
 			Character->SetGruxRendered(false);
 		}
 	}

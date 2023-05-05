@@ -64,9 +64,16 @@ void AKhaimera::OnHearNoise(APawn* OtherActor, const FVector& Location, float Vo
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && KhaimeraCombatState == EKhaimeraCombatState::EKCS_Unoccupied && !bKhaimeraDied && !bKhaimeraStunned)
 	{
-		AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
-		GetWorldTimerManager().ClearTimer(PatrolTimer);
-		GetCharacterMovement()->MaxWalkSpeed = 800;
+		if(!IsValid(AIC_Ref))
+		{
+			AIC_Ref = Cast<AEnemyController>(GetController());
+		}
+		else
+		{
+			AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
+			GetWorldTimerManager().ClearTimer(PatrolTimer);
+			GetCharacterMovement()->MaxWalkSpeed = 800;
+		}
 	}
 }
 
@@ -77,12 +84,26 @@ void AKhaimera::Patrol()
 	{
 		FNavLocation NavLoc;
 		NavSys->GetRandomReachablePointInRadius(GetActorLocation(), 1500.f, NavLoc);
-		if (AIC_Ref && !bCombatRange && !bKhaimeraDied && !bKhaimeraStunned)
+		if(!IsValid(AIC_Ref))
 		{
-			AIC_Ref->MoveToLocation(NavLoc);
-			GetWorldTimerManager().SetTimer(PatrolTimer, this, &AKhaimera::Patrol, 5.f);
-			GetCharacterMovement()->MaxWalkSpeed = 600;
+			AIC_Ref = Cast<AEnemyController>(GetController());
+			if (AIC_Ref && !bCombatRange && !bKhaimeraDied && !bKhaimeraStunned)
+			{
+				AIC_Ref->MoveToLocation(NavLoc);
+				GetWorldTimerManager().SetTimer(PatrolTimer, this, &AKhaimera::Patrol, 5.f);
+				GetCharacterMovement()->MaxWalkSpeed = 600;
+			}
 		}
+		else
+		{
+			if (AIC_Ref && !bCombatRange && !bKhaimeraDied && !bKhaimeraStunned)
+			{
+				AIC_Ref->MoveToLocation(NavLoc);
+				GetWorldTimerManager().SetTimer(PatrolTimer, this, &AKhaimera::Patrol, 5.f);
+				GetCharacterMovement()->MaxWalkSpeed = 600;
+			}
+		}
+		
 	}
 }
 
@@ -110,6 +131,41 @@ void AKhaimera::Die()
 
 void AKhaimera::Destroyed()
 {
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		/*if(Character)
+		{
+			Character->SetAmountOfDeadEnemies(Character->GetAmountOfDeadEnemies() + 1);
+			const float RandomPotion = FMath::FRandRange(0.f,1.f);
+			if(RandomPotion < 0.5f)
+			{
+				GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("Mana İksiri"));
+				GetWorld()->SpawnActor<AActor>(Character->GetManaPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("Can İksiri"));
+				GetWorld()->SpawnActor<AActor>(Character->GetHealthPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+			}
+		}*/
+	}
+	else
+	{
+		Character->SetAmountOfDeadEnemies(Character->GetAmountOfDeadEnemies() + 1);
+		const float RandomPotion = FMath::FRandRange(0.f,1.f);
+		if(RandomPotion < 0.5f)
+		{
+			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("Mana İksiri"));
+			GetWorld()->SpawnActor<AActor>(Character->GetManaPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("Can İksiri"));
+			GetWorld()->SpawnActor<AActor>(Character->GetHealthPotion(), (GetActorLocation() + GetActorForwardVector() * -100.f), GetActorRotation());
+		}
+		
+	}
 	Destroy();
 }
 
@@ -140,6 +196,10 @@ void AKhaimera::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
 		{
+			if(Character->GetCameraManager())
+			{
+				Character->GetCameraManager()->StartCameraShake(Character->GetCameraShakeHitReact(),1);
+			}
 			const float HitReacts = FMath::RandRange(0.f, 1.f);
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior && HitReacts <= 0.5f)
 			{

@@ -64,6 +64,10 @@ void AHammer::HammerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
 		{
+			if(Character->GetCameraManager())
+			{
+				Character->GetCameraManager()->StartCameraShake(Character->GetCameraShakeHitReact(),1);
+			}
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
 			{
 				if(!Character->GetNarbashRendered())

@@ -3,10 +3,13 @@
 
 #include "Arrow.h"
 
+#include "EnemySpawnPortal.h"
 #include "Grux.h"
 #include "Khaimera.h"
+#include "MagicTrap.h"
 #include "Narbash.h"
 #include "NavigationSystemTypes.h"
+#include "Chaos/GeometryParticlesfwd.h"
 #include "Engine/LODActor.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -43,8 +46,10 @@ void AArrow::BeginPlay()
 	ArrowCollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AArrow::BeginOverlap);
 	if(Character)
 	{
+		GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("1231231"));
 		Character->GetPickUpItem(this);
 		ArrowMovementComponent->ProjectileGravityScale = ArrowMovementComponent->ProjectileGravityScale - (Character->ArrowSpeed * 0.03f);
+		StartCameraShake();
 	}
 	/*TSubclassOf<AGrux> classToFind;
 	classToFind = AGrux::StaticClass();
@@ -56,6 +61,21 @@ void AArrow::BeginPlay()
 	{
 		GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Blue,TEXT("2131231"));
 	}*/
+}
+
+void AArrow::StartCameraShake()
+{
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
+	{
+		if(Character->GetCameraManager())
+		{
+			Character->GetCameraManager()->StartCameraShake(CameraShakeArcherAttack,1);
+		}
+	}
 }
 
 void AArrow::Tick(float DeltaTime)
@@ -72,7 +92,7 @@ void AArrow::Tick(float DeltaTime)
 			ArrowMovementComponent->MaxSpeed = 5000;
 			FireArrowParticle->SetVisibility(false);
 			UltimateArrowParticle->SetVisibility(false);
-			ArrowMovementComponent->ProjectileGravityScale = 4;
+			//ArrowMovementComponent->ProjectileGravityScale = 4;
 			break;
 		case 1:
 			FireArrowParticle->Activate(true);
@@ -104,7 +124,9 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	AFey* Fey = Cast<AFey>(OtherActor);
 	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
-	if(OtherActor != this)
+	AMagicTrap* MagicTrap = Cast<AMagicTrap>(OtherActor);
+	AEnemySpawnPortal* EnemySpawnPortal = Cast<AEnemySpawnPortal>(OtherActor);
+	if(OtherActor != this && OtherActor != MagicTrap && OtherActor != EnemySpawnPortal)
 	{
 		if(Grux && !Grux->GetDied())
 		{
@@ -127,6 +149,11 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 				AnimInstance->Montage_JumpToSection(FName("Front"));
 				Grux->SetGruxCombatState(EGruxCombatState::EGCS_FireTimerInProgress);
 				Grux->GetCharacterMovement()->MaxWalkSpeed = 0;
+			}
+			if(Grux->GetPawnSensingComponent())
+			{
+				Grux->GetPawnSensingComponent()->HearingThreshold = 10000;
+				Grux->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
 			}
 		}
 		if(Khaimera && !Khaimera->GetDied())
@@ -151,6 +178,11 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 				Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
 				Khaimera->GetCharacterMovement()->MaxWalkSpeed = 0;
 			}
+			if(Khaimera->GetPawnSensingComponent())
+			{
+				Khaimera->GetPawnSensingComponent()->HearingThreshold = 10000;
+				Khaimera->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
+			}
 		}
 		if(Narbash && !Narbash->GetDied() && !Narbash->GetInvincibility())
 		{
@@ -174,6 +206,11 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 				Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
 				Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
 			}
+			if(Narbash->GetPawnSensingComponent())
+			{
+				Narbash->GetPawnSensingComponent()->HearingThreshold = 10000;
+				Narbash->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
+			}
 		}
 		if(Fey && !Fey->GetDied())
 		{
@@ -196,6 +233,11 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 				AnimInstance->Montage_JumpToSection(FName("Front"));
 				Fey->SetFeyCombatState(EFeyCombatState::EFCS_FireTimerInProgress);
 				Fey->GetCharacterMovement()->MaxWalkSpeed = 0;
+			}
+			if(Fey->GetPawnSensingComponent())
+			{
+				Fey->GetPawnSensingComponent()->HearingThreshold = 10000;
+				Fey->GetPawnSensingComponent()->LOSHearingThreshold = 11000;
 			}
 		}
 		

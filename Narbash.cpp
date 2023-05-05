@@ -74,9 +74,16 @@ void ANarbash::OnHearNoise(APawn* OtherActor, const FVector& Location, float Vol
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && NarbashCombatState == ENarbashCombatState::ENCS_Unoccupied && !bNarbashDied && !bNarbashStunned && !bInvincibility)
 	{
-		AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
-		GetCharacterMovement()->MaxWalkSpeed = 600;
-		ThrowHammerMontage();
+		if(!IsValid(AIC_Ref))
+		{
+			AIC_Ref = Cast<AEnemyController>(GetController());
+		}
+		else
+		{
+			AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
+			GetCharacterMovement()->MaxWalkSpeed = 600;
+			ThrowHammerMontage();
+		}
 	}
 }
 
@@ -134,6 +141,10 @@ void ANarbash::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
 		{
+			if(Character->GetCameraManager())
+			{
+				Character->GetCameraManager()->StartCameraShake(Character->GetCameraShakeHitReact(),1);
+			}
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
 			{
 				if(bBehind)
@@ -240,7 +251,11 @@ void ANarbash::CombatRangeOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor
 
 void ANarbash::ThrowHammer()
 {
-	if(Character)
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
 	{
 		FVector FXSpawnLocation(Character->GetActorLocation().X,Character->GetActorLocation().Y,Character->GetActorLocation().Z + 500.f);
 		FRotator FXSpawnRotation(0,-90,0);
@@ -293,7 +308,11 @@ void ANarbash::ThrowHammerMontage()
 
 void ANarbash::SpawnFirstAbility()
 {
-	if(Character)
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
 	{
 		const FVector SpawnLocation(Character->GetActorLocation().X,Character->GetActorLocation().Y,Character->GetActorLocation().Z);
 		const FRotator SpawnRotation(0,0,0);
@@ -341,7 +360,11 @@ void ANarbash::EndInvincibility()
 
 void ANarbash::SpawnSafeZone()
 {
-	if(Character)
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
 	{
 		const float RandomLocation = FMath::RandRange(-600.f, 600.f);
 		const FVector SpawnLocationSafeZone(GetActorLocation().X + RandomLocation,GetActorLocation().Y+RandomLocation,GetActorLocation().Z);
@@ -358,7 +381,6 @@ void ANarbash::SpawnSafeZone()
 			GetWorldTimerManager().SetTimer(TriggerSafeZone,this,&ANarbash::SpawnSafeZone,2.f);
 		}
 	}
-
 }
 
 void ANarbash::Tick(float DeltaTime)

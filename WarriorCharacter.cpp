@@ -31,7 +31,7 @@ AWarriorCharacter::AWarriorCharacter() :
 	BaseLookUpRate(45.f),
 	bSpeedBoost(false),
 	SpeedBoostValue(100.f),
-	SpeedBoostCooldown(10.f),
+	SpeedBoostCooldown(0.f),
 	SpeedBoostCooldownControl(true),
 	RollClick(0.f),
 	Rolling(false),
@@ -62,6 +62,7 @@ AWarriorCharacter::AWarriorCharacter() :
 	GruxRendered(false),
 	KhaimeraRendered(false),
 	NarbashRendered(false),
+	RampageRendered(false),
 	FastArrowFire(false),
 	ArrowSpawnedAmount(0),
 	WarriorFirstSkillCooldown(0.f),
@@ -81,7 +82,11 @@ AWarriorCharacter::AWarriorCharacter() :
 	ManaPotionCooldown(0.f),
 	ManaPotionTriggerAmount(0),
 	HealthPotionTriggerAmount(0),
-	InSafeZone(false)
+	InSafeZone(false),
+	AmountOfDeadEnemies(5),
+	EnemySpawning(false),
+	WaveState(EWaveState::EWS_WaveOne),
+	ArrowGettingReady(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -146,10 +151,6 @@ void AWarriorCharacter::BeginPlay()
 	TurnCollisionSphere2->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::WarriorSecondSpinOverlap);
 	BehindCollision->OnComponentBeginOverlap.AddDynamic(this, &AWarriorCharacter::BehindOverlap);
 	BehindCollision->OnComponentEndOverlap.AddDynamic(this, &AWarriorCharacter::BehindEnd);
-	/*FTimerHandle ManaRestoreTriggerTimer;
-	FTimerHandle HealthRestoreTriggerTimer;
-	GetWorldTimerManager().SetTimer(ManaRestoreTriggerTimer, this, &AWarriorCharacter::ManaRestore, 1.f);
-	GetWorldTimerManager().SetTimer(HealthRestoreTriggerTimer, this, &AWarriorCharacter::HealthRestore, 1.f);*/
 	ManaRestore();
 	HealthRestore();
 	ChangeCharacterTimer();
@@ -197,11 +198,11 @@ void AWarriorCharacter::LookUpAtRate(float Rate) {
 
 void AWarriorCharacter::AddControllerYawInput(float Value)
 {
-	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior)
+	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior  && !Rolling)
 	{
 		APawn::AddControllerYawInput(Value);
 	}
-	if(CharacterState == ECharacterState::ECS_Archer)
+	if(CharacterState == ECharacterState::ECS_Archer  && !Rolling)
 	{
 		APawn::AddControllerYawInput(Value);
 	}
@@ -211,11 +212,11 @@ void AWarriorCharacter::AddControllerYawInput(float Value)
 
 void AWarriorCharacter::AddControllerPitchInput(float Value)
 {
-	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior)
+	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior && !Rolling)
 	{
 		APawn::AddControllerPitchInput(Value);
 	}
-	if(CharacterState == ECharacterState::ECS_Archer)
+	if(CharacterState == ECharacterState::ECS_Archer  && !Rolling)
 	{
 		APawn::AddControllerPitchInput(Value);
 	}
@@ -256,7 +257,7 @@ void AWarriorCharacter::SpeedBoost(float Value) {
 	if (Value > 0.f && SpeedBoostValue > 0 && SpeedBoostCooldown <= 0 && !SpeedBoostCooldownControl && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging) {
 		bSpeedBoost = true;
 		SpeedBoostValue -= Value * 0.1f;
-		GetCharacterMovement()->MaxWalkSpeed = 600.f;
+		GetCharacterMovement()->MaxWalkSpeed = 800.f;
 	}
 	else {
 		GetCharacterMovement()->MaxWalkSpeed = 400.f;
@@ -316,7 +317,6 @@ void AWarriorCharacter::ArcherBasicAttack(float Value)
 		{
 			const FTransform SocketTransform = ArrowSpawnSocket->GetSocketTransform(GetMesh());
 			FVector ArrowSpawnLocation = SocketTransform.GetLocation();
-
 			if (CameraManager )
 			{
 				const FVector CrosshairWorldLocation = CameraManager->GetCameraLocation();
@@ -327,8 +327,9 @@ void AWarriorCharacter::ArcherBasicAttack(float Value)
 					ArcherCanFire = true;
 					if(ArrowSpeed <= 99)
 					{
-						ArrowSpeed +=1.f;
+						ArrowSpeed +=1.5f;
 						CombatState = ECombatState::ECS_FireTimerInProgress;
+						ArrowGettingReady = true;
 					}
 				}
 				if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !ArcherBasicAttackReset && Value < 1  && ArcherCanFire)
@@ -343,6 +344,7 @@ void AWarriorCharacter::ArcherBasicAttack(float Value)
 						GetWorld()->SpawnActor<AActor>(ActorToSpawn, ArrowSpawnLocation, ArrowSpanwRotation);
 						ArrowSpeed = 0;
 						ArcherCanFire = false;
+						ArrowGettingReady = false;
 					}
 				}
 			}
@@ -552,14 +554,17 @@ void AWarriorCharacter::PlayRollMontage(float DeltaTime)
 		{
 			RollClick = 0;
 			GetWorldTimerManager().ClearTimer(ClickTimer);
-			Velocity =  GetCharacterMovement()->Velocity;
-			TargetVelocity = (GetActorForwardVector() * 10000.0f);
-			Velocity = FMath::VInterpTo(Velocity,TargetVelocity , DeltaTime, 0.01f);
-			GetCharacterMovement()->Velocity = TargetVelocity;
+			TargetVelocity = (GetActorForwardVector() * 1500.0f);
 			RollReset = true;
-			GetWorldTimerManager().SetTimer(RollResetTimer, this, &AWarriorCharacter::RollResetFunction, 0.75f);
+			GetWorldTimerManager().SetTimer(RollResetTimer, this, &AWarriorCharacter::RollResetFunction, 2.f);
 		}
 		
+	}
+	if(Rolling)
+	{
+		Velocity =  GetCharacterMovement()->Velocity;
+		Velocity = FMath::VInterpTo(Velocity,TargetVelocity , DeltaTime, 15.f);
+		GetCharacterMovement()->Velocity = FMath::Lerp(GetCharacterMovement()->Velocity,TargetVelocity,2.f);
 	}
 }
 
@@ -627,6 +632,7 @@ void AWarriorCharacter::UseHealthPotion()
 		HealthPotionCooldown = 30.f;
 		HealthPotionAmount -= 1.f;
 		UsingHealthPotion();
+		HealthPotionTimeReset();
 	}
 }
 
@@ -637,6 +643,7 @@ void AWarriorCharacter::UseManaPotion()
 		ManaPotionCooldown = 30.f;
 		ManaPotionAmount -= 1.f;
 		UsingManaPotion();
+		ManaPotionTimeReset();
 	}
 }
 
@@ -690,6 +697,34 @@ void AWarriorCharacter::UsingManaPotion()
 	else
 	{
 		ManaPotionTriggerAmount = 0;
+	}
+}
+
+void AWarriorCharacter::HealthPotionTimeReset()
+{
+	if(HealthPotionCooldown > 0)
+	{
+		HealthPotionCooldown--;
+		FTimerHandle HealthPotionTimer;
+		GetWorldTimerManager().SetTimer(HealthPotionTimer,this,&AWarriorCharacter::HealthPotionTimeReset,1.f);
+	}
+	else
+	{
+		HealthPotionCooldown = 0;
+	}
+}
+
+void AWarriorCharacter::ManaPotionTimeReset()
+{
+	if(ManaPotionCooldown > 0)
+	{
+		ManaPotionCooldown--;
+		FTimerHandle ManaPotionTimer;
+		GetWorldTimerManager().SetTimer(ManaPotionTimer,this,&AWarriorCharacter::ManaPotionTimeReset,1.f);
+	}
+	else
+	{
+		ManaPotionCooldown = 0;
 	}
 }
 
@@ -777,7 +812,7 @@ void AWarriorCharacter::SecondSkill()
 			GetWorldTimerManager().SetTimer(SpawnSecondSkillTimer, this, &AWarriorCharacter::PlayWarriorSecondFX, 0.55f);
 			SecondSkillCooldownReset();
 		}
-		if(CharacterState == ECharacterState::ECS_Archer && GruxRendered && DistanceTargetEnemy < 2500 && ArcherSecondSkillCooldown <= 0 && CharacterMana >= 20.f)
+		if(CharacterState == ECharacterState::ECS_Archer && DistanceTargetEnemy < 2500 && ArcherSecondSkillCooldown <= 0 && CharacterMana >= 20.f && (GruxRendered || FeyRendered || KhaimeraRendered || NarbashRendered ||	RampageRendered))
 		{
 			CharacterMana -= 20.f;
 			ArcherSecondSkillCooldown = 9.f;
@@ -809,7 +844,7 @@ void AWarriorCharacter::ThirdSkill()
 			CombatState = ECombatState::ECS_FireTimerInProgress;
 			ThirdSkillCooldownReset();
 		}
-		if(CharacterState == ECharacterState::ECS_Archer && GruxRendered && DistanceTargetEnemy < 2500 && ArcherThirdSkillCooldown <= 0 && CharacterMana >= 25.f)
+		if(CharacterState == ECharacterState::ECS_Archer && DistanceTargetEnemy < 2500 && ArcherThirdSkillCooldown <= 0 && CharacterMana >= 25.f  && (GruxRendered || FeyRendered || KhaimeraRendered || NarbashRendered ||	RampageRendered))
 		{
 			CharacterMana -= 25.f;
 			ArcherThirdSkillCooldown = 11.f;

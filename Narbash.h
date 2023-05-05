@@ -127,6 +127,7 @@ public:
 	FORCEINLINE void SetNarbashStunned(bool NewNarbashStunned) { bNarbashStunned = NewNarbashStunned; }
 	FORCEINLINE bool GetNarbashStunned() const { return bNarbashStunned; }
 	FORCEINLINE bool GetDied() const { return bNarbashDied; }
+	FORCEINLINE UPawnSensingComponent* GetPawnSensingComponent() const { return PawnSensing;}
 	FORCEINLINE bool GetInvincibility() const { return bInvincibility; }
 	FORCEINLINE UAnimMontage* GetHitReactsAnimMontage() const { return NarbashHitReacts; }
 	FORCEINLINE void SetNarbashHealth(float NewNarbashHealth) { NarbashHealth = NewNarbashHealth; }

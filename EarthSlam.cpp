@@ -7,6 +7,7 @@
 #include "Narbash.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 AEarthSlam::AEarthSlam()
 {
@@ -22,7 +23,8 @@ void AEarthSlam::BeginPlay()
 {
 	Super::BeginPlay();
 	EarthSlamBoxComponent->OnComponentBeginOverlap.AddDynamic(this,&AEarthSlam::EarthSlamOverlap);
-	
+	Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	StartCameraShake();
 }
 
 void AEarthSlam::Destroyed()
@@ -30,6 +32,21 @@ void AEarthSlam::Destroyed()
 	if(this)
 	{
 		Destroy();
+	}
+}
+
+void AEarthSlam::StartCameraShake()
+{
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
+	{
+		if(Character->GetCameraManager())
+		{
+			Character->GetCameraManager()->StartCameraShake(CameraShakeEarthSlam,1);
+		}
 	}
 }
 

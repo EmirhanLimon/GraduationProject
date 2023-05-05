@@ -97,6 +97,7 @@ private:
 	FORCEINLINE void SetKhaimeraStunned(bool NewKhaimeraStunned) { bKhaimeraStunned = NewKhaimeraStunned; }
 	FORCEINLINE bool GetKhaimeraStunned() const { return bKhaimeraStunned; }
 	FORCEINLINE bool GetDied() const { return bKhaimeraDied; }
+	FORCEINLINE UPawnSensingComponent* GetPawnSensingComponent() const { return PawnSensing; }
 	FORCEINLINE void SetKhaimeraHealth(float NewKhaimeraHealth) { KhaimeraHealth = NewKhaimeraHealth; }
 	FORCEINLINE float GetKhaimeraHealth() const { return KhaimeraHealth; }
 	FORCEINLINE UAnimMontage* GetKhaimeraHitReacts() const { return KhaimeraHitReacts; }

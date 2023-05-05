@@ -30,6 +30,16 @@ enum class EBasicAttackState : uint8
 	EBAS_SecondAttack UMETA(DisplayName = "SecondAttack"),
 	EBAS_ThirdAttack UMETA(DisplayName = "ThirdAttack")
 };
+
+UENUM(BlueprintType)
+enum class EWaveState : uint8
+{
+	EWS_WaveOne UMETA(DisplayName = "WaveOne"),
+	EWS_WaveTwo UMETA(DisplayName = "WaveTwo"),
+	EWS_WaveThree UMETA(DisplayName = "WaveThree"),
+	EWS_WaveFour UMETA(DisplayName = "WaveFour"),
+	EWS_WaveFive UMETA(DisplayName = "WaveFive")
+};
 class AArrow;
 UCLASS()
 class GRADUATIONPROJECT_API AWarriorCharacter : public ACharacter
@@ -100,8 +110,11 @@ private:
 	void UseManaPotion();
 	void UsingHealthPotion();
 	void UsingManaPotion();
+	void HealthPotionTimeReset();
+	void ManaPotionTimeReset();
 	void RestoreCharacterChangeValue();
 	void ChangeCharacterTimer();
+	
 
 	FTimerHandle SpeedBoostCooldownTimer;
 	FTimerHandle ClickTimer;
@@ -121,6 +134,8 @@ private:
 		class UCameraComponent* FollowCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		uint8 SwitchCounter;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
+		float AmountOfDeadEnemies;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		float BaseTurnRate;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly ,Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -178,6 +193,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool NarbashRendered;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool RampageRendered;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool FastArrowFire;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool SwordAttacking;
@@ -185,6 +202,10 @@ private:
 		bool Invincibility;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		bool InSafeZone;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool EnemySpawning;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		bool ArrowGettingReady;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		int32 RollClick;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -217,6 +238,8 @@ private:
 		EBasicAttackState BasicAttackState;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		ECombatState CombatState;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		EWaveState WaveState;
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 		TSubclassOf<AActor> ActorToSpawn;
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
@@ -288,11 +311,18 @@ private:
 		uint8 HealthPotionTriggerAmount;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		uint8 ManaPotionTriggerAmount;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+		TSubclassOf<UCameraShakeBase> CameraShakeHitReact;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+		TSubclassOf<AActor> HealthPotiontoSpawn;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+		TSubclassOf<AActor> ManaPotiontoSpawn;
 	
 public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE uint8 GetSwitchCounter() const { return SwitchCounter; }
+	FORCEINLINE float GetAmountOfDeadEnemies() const { return AmountOfDeadEnemies; }
 	FORCEINLINE FVector GetEnemyTargetLocation() const { return EnemyTargetLocation; }
 	FORCEINLINE float GetCharacterHealth() const { return CharacterHealth; }
 	FORCEINLINE float GetHealthPotionAmount() const { return HealthPotionAmount; }
@@ -307,21 +337,30 @@ public:
 	FORCEINLINE bool GetNarbashRendered() const { return NarbashRendered; }
 	FORCEINLINE bool GetInvincibility() const { return Invincibility; }
 	FORCEINLINE bool GetSafeZone() const { return InSafeZone; }
+	FORCEINLINE bool GetEnemySpawning() const { return EnemySpawning; }
 	FORCEINLINE AMyPlayerCameraManager* GetCameraManager() const { return CameraManager; }
 	FORCEINLINE UAnimMontage* GetWarriorCharacterHitReacts() const { return WarriorCharacterHitReacts; }
 	FORCEINLINE UAnimMontage* GetArcherCharacterHitReacts() const { return ArcherCharacterHitReacts; }
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
+	FORCEINLINE EWaveState GetWaveState() const { return WaveState; }
+	FORCEINLINE TSubclassOf<UCameraShakeBase> GetCameraShakeHitReact() const { return CameraShakeHitReact; }
+	FORCEINLINE TSubclassOf<AActor> GetHealthPotion() const { return HealthPotiontoSpawn; }
+	FORCEINLINE TSubclassOf<AActor> GetManaPotion() const { return ManaPotiontoSpawn; }
 	FORCEINLINE void SetReinforcedArrowUsing(bool NewReinforcedArrowUsing) { ReinforcedArrowUsing = NewReinforcedArrowUsing; }
 	FORCEINLINE void SetbIsInAir(bool NewbIsInAir) { bIsInAir = NewbIsInAir; }
+	FORCEINLINE void SetAmountOfDeadEnemies(float NewAmountOfDeadEnemies) { AmountOfDeadEnemies = NewAmountOfDeadEnemies; }
 	FORCEINLINE void SetGruxRendered(bool NewGruxRendered) { GruxRendered = NewGruxRendered; }
 	FORCEINLINE void SetKhaimeraRendered(bool NewKhaimeraRendered) { KhaimeraRendered = NewKhaimeraRendered; }
 	FORCEINLINE void SetFeyRendered(bool NewFeyRendered) { FeyRendered = NewFeyRendered; }
 	FORCEINLINE void SetNarbashRendered(bool NewNarbashRendered) { NarbashRendered = NewNarbashRendered; }
+	FORCEINLINE void SetRampageRendered(bool NewRampageRendered) { RampageRendered = NewRampageRendered; }
 	FORCEINLINE void SetSwitchCounter(uint8 NewSwitchCounter) { SwitchCounter = NewSwitchCounter; }
 	FORCEINLINE void SetCharacterHealth(float NewCharacterHealth) { CharacterHealth = NewCharacterHealth; }
 	FORCEINLINE void SetCombatState(ECombatState NewCombatState) { CombatState = NewCombatState; }
 	FORCEINLINE void SetHealthPotionAmount(float NewHealthPotionAmount) { HealthPotionAmount = NewHealthPotionAmount; }
 	FORCEINLINE void SetManaPotionAmount(float NewManaPotionAmount) { ManaPotionAmount = NewManaPotionAmount; }
 	FORCEINLINE void SetSafeZone(bool NewInSafeZone) { InSafeZone = NewInSafeZone; }
+	FORCEINLINE void SetEnemySpawning(bool NewEnemySpawning) { EnemySpawning = NewEnemySpawning; }
+	FORCEINLINE void SetWaveState(EWaveState NewWaveState) { WaveState = NewWaveState; }
 };

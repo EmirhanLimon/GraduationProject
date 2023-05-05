@@ -35,6 +35,7 @@ void AMagicAbility::BeginPlay()
 	FTimerHandle DestroyTimer;
 	GetWorldTimerManager().SetTimer(DestroyTimer, this, &AMagicAbility::DestroyFunction, 2.f);
 	ThunderStormCollisionCapsule->OnComponentBeginOverlap.AddDynamic(this, &AMagicAbility::MagicAbilityOverlap);
+	StartCameraShake();
 }
 
 void AMagicAbility::DestroyFunction()
@@ -42,8 +43,23 @@ void AMagicAbility::DestroyFunction()
 	Destroy();
 }
 
+void AMagicAbility::StartCameraShake()
+{
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
+	{
+		if(Character->GetCameraManager())
+		{
+			Character->GetCameraManager()->StartCameraShake(CameraShakeThunderStorm,1);
+		}
+	}
+}
+
 void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                                        UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
