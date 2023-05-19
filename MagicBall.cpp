@@ -80,6 +80,7 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 			UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetWarriorHitReactSoundCue());
 				if(Character->GetFeyRendered())
 				{
 					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
@@ -94,6 +95,7 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 			}
 			if(Character->GetCharacterState() == ECharacterState::ECS_Archer)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetArcherHitReactSoundCue());
 				if(Character->GetFeyRendered())
 				{
 					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());

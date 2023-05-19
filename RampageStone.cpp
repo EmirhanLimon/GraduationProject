@@ -56,6 +56,21 @@ void ARampageStone::Destroyed()
 	{
 		if(Distance < 750)
 		{
+			if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
+			{
+				UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+				if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
+				{
+					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+				}
+				else
+				{
+					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+				}
+				Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
+			}
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), RockHitWorldParticle,FVector(Character->GetActorLocation().X,Character->GetActorLocation().Y,Character->GetActorLocation().Z),GetActorRotation(),FVector(5,5,2));
 			if(!Character->GetInvincibility())
 			{
@@ -83,6 +98,7 @@ void ARampageStone::Destroyed()
 	{
 		Character->GetCameraManager()->StartCameraShake(CameraShakeHitStone,1);
 	}
+	UGameplayStatics::PlaySound2D(this,Character->GetStoneHitWorldSoundCue());
 	Destroy();
 }
 
@@ -103,7 +119,7 @@ void ARampageStone::Tick(float DeltaTime)
 		FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),FVector(FirstTargetLocation.X,FirstTargetLocation.Y,TargetLocation.Z) + Character->GetActorForwardVector());
 		FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
 		SetActorRotation(NewRotation);
-		SetActorLocation(GetActorLocation() + ((GetActorForwardVector() * 10000.f) * DeltaTime));
+		SetActorLocation(GetActorLocation() + ((GetActorForwardVector() * 13000.f) * DeltaTime));
 	}
 	if(Character)
 	{
@@ -117,6 +133,5 @@ void ARampageStone::Tick(float DeltaTime)
 		RampageStoneStaticMeshComponent->SetSimulatePhysics(true);
 		Simulate = true;
 	}
-	
 }
 

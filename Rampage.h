@@ -35,7 +35,9 @@ protected:
 	virtual void BeginPlay() override;
 	UFUNCTION()
 	void OnHearNoise(APawn* OtherActor, const FVector& Location, float Volume);
+	void CanJump();
 	void ThrowStone();
+	void PlayTrainingMontage();
 	void PlayThrowStoneAnimMontage();
 	void Jumping();
 	void PlayJumpEndFX();
@@ -57,6 +59,8 @@ private:
 	bool bIsInAir;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bRampageDied;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bCanJump;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character", meta = (AllowPrivateAccess))
 	AEnemyController* AIC_Ref;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy", meta = (AllowPrivateAccess))
@@ -69,6 +73,8 @@ private:
 	UAnimMontage* JumpMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	UAnimMontage* AttackMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* TrainingMontage;
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 	TSubclassOf<AActor> StonetoSpawn;
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
@@ -84,6 +90,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bCanAttack;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bTraining;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bLeftArmCanDamage;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bRightArmCanDamage;
@@ -97,7 +105,26 @@ private:
 	class UBoxComponent* RightArmBoxComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float RampageHealth;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USoundCue* TrainingSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USoundCue* ThrowStoneSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USoundCue* AttackSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USoundCue* JumpSoundCue;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	FVector FirstJumpTargetLocation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	FVector SecondJumpTargetLocation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	uint8 JumpAmount;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bMovementStop;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bFirstJump;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bSecondJump;
 
 public:
 	FORCEINLINE void SetbIsInAir(bool NewbIsInAir) { bIsInAir = NewbIsInAir; }

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "MyPlayerCameraManager.h"
 #include "GameFramework/Character.h"
+#include "Sound/SoundCue.h"
 #include "WarriorCharacter.generated.h"
 
 
@@ -81,8 +82,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	UPROPERTY(BlueprintReadOnly)
 	float ArrowSpeed;
+	UPROPERTY(BlueprintReadOnly)
+	float ArrowDamageWithSpeed;
 	
 private:
+	UFUNCTION(BlueprintCallable)
+	EPhysicalSurface GetSurfaceTypes();
 	void FirstSkill();
 	void SecondSkill();
 	void ThirdSkill();
@@ -273,6 +278,32 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		UParticleSystem* EarthSlamParticle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* WarriorJumpSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* WarriorBasicAttackSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* WarriorShieldSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* WarriorThunderStormSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* WarriorEarthSlamSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* WarriorHitReactSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* ArcherHitReactSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* GruxHitReactSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* KhaimeraHitReactSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* NarbashHitReactSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* FeyHitReactSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* ArcherJumpSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+		USoundCue* StoneHitWorldSoundCue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float CharacterHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 		float CharacterMana;
@@ -350,6 +381,13 @@ public:
 	FORCEINLINE TSubclassOf<UCameraShakeBase> GetCameraShakeHitReact() const { return CameraShakeHitReact; }
 	FORCEINLINE TSubclassOf<AActor> GetHealthPotion() const { return HealthPotiontoSpawn; }
 	FORCEINLINE TSubclassOf<AActor> GetManaPotion() const { return ManaPotiontoSpawn; }
+	FORCEINLINE USoundCue* GetWarriorHitReactSoundCue() const { return WarriorHitReactSoundCue; }
+	FORCEINLINE USoundCue* GetArcherHitReactSoundCue() const { return ArcherHitReactSoundCue; }
+	FORCEINLINE USoundCue* GetGruxHitReactSoundCue() const { return GruxHitReactSoundCue; }
+	FORCEINLINE USoundCue* GetKhaimeraHitReactSoundCue() const { return KhaimeraHitReactSoundCue; }
+	FORCEINLINE USoundCue* GetNarbashHitReactSoundCue() const { return NarbashHitReactSoundCue; }
+	FORCEINLINE USoundCue* GetFeyHitReactSoundCue() const { return FeyHitReactSoundCue; }
+	FORCEINLINE USoundCue* GetStoneHitWorldSoundCue() const { return StoneHitWorldSoundCue; }
 	FORCEINLINE void SetReinforcedArrowUsing(bool NewReinforcedArrowUsing) { ReinforcedArrowUsing = NewReinforcedArrowUsing; }
 	FORCEINLINE void SetbIsInAir(bool NewbIsInAir) { bIsInAir = NewbIsInAir; }
 	FORCEINLINE void SetAmountOfDeadEnemies(float NewAmountOfDeadEnemies) { AmountOfDeadEnemies = NewAmountOfDeadEnemies; }

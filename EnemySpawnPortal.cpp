@@ -4,6 +4,7 @@
 #include "EnemySpawnPortal.h"
 
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 AEnemySpawnPortal::AEnemySpawnPortal() :
@@ -48,6 +49,7 @@ void AEnemySpawnPortal::PortalOverlap(UPrimitiveComponent* OverlappedComponent, 
 		GetWorldTimerManager().SetTimer(RotationTimer,this,&AEnemySpawnPortal::RotationEnd,2.f);
 		Character->SetAmountOfDeadEnemies(0);
 		Character->SetEnemySpawning(true);
+		UGameplayStatics::PlaySound2D(this,RockFrictionSoundCue);
 		switch (Character->GetWaveState())
 		{
 		case EWaveState::EWS_WaveOne:
@@ -83,7 +85,7 @@ void AEnemySpawnPortal::PortalEnd(UPrimitiveComponent* OverlappedComp, AActor* O
 void AEnemySpawnPortal::RotateStaticMesh(float DeltaTime)
 {
 	FRotator NewRotation(StaticMeshComponentVeriable->GetRelativeRotation().Pitch,StaticMeshComponentVeriable->GetRelativeRotation().Yaw,StaticMeshComponentVeriable->GetRelativeRotation().Roll);
-	StaticMeshComponentVeriable->SetRelativeRotation(FRotator(NewRotation.Pitch + (10.f * DeltaTime),NewRotation.Yaw,NewRotation.Roll));
+	StaticMeshComponentVeriable->SetRelativeRotation(FRotator(NewRotation.Pitch + (15.f * DeltaTime),NewRotation.Yaw,NewRotation.Roll));
 	GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Red,TEXT("2131"));
 }
 

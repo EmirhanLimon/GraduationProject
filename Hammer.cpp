@@ -70,6 +70,7 @@ void AHammer::HammerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 			}
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetWarriorHitReactSoundCue());
 				if(!Character->GetNarbashRendered())
 				{
 					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
@@ -84,6 +85,7 @@ void AHammer::HammerOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 			}
 			if(Character->GetCharacterState() == ECharacterState::ECS_Archer)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetArcherHitReactSoundCue());
 				if(!Character->GetNarbashRendered())
 				{
 					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());
@@ -112,6 +114,6 @@ void AHammer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if(Character)
 	{
-		//SetActorLocation(FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 2.f));
+		SetActorLocation(FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, 10.f));
 	}
 }

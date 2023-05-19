@@ -31,6 +31,7 @@ void AGroundSmash::BeginPlay()
 	FTimerHandle DestroyTimer;
 	GetWorldTimerManager().SetTimer(DestroyTimer,this,&AGroundSmash::Destroyed,0.5f);
 	PlayCameraShake();
+	UGameplayStatics::PlaySound2D(this,Character->GetStoneHitWorldSoundCue());
 }
 
 void AGroundSmash::PlayCameraShake()

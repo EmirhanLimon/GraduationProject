@@ -23,7 +23,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "Widgets/Text/ISlateEditableTextWidget.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "GraduationProject.h"
 
 
 AWarriorCharacter::AWarriorCharacter() :
@@ -85,6 +86,7 @@ AWarriorCharacter::AWarriorCharacter() :
 	InSafeZone(false),
 	AmountOfDeadEnemies(5),
 	EnemySpawning(false),
+	ArrowDamageWithSpeed(0.f),
 	WaveState(EWaveState::EWS_WaveOne),
 	ArrowGettingReady(false)
 {
@@ -328,6 +330,7 @@ void AWarriorCharacter::ArcherBasicAttack(float Value)
 					if(ArrowSpeed <= 99)
 					{
 						ArrowSpeed +=1.5f;
+						ArrowDamageWithSpeed = ArrowSpeed;
 						CombatState = ECombatState::ECS_FireTimerInProgress;
 						ArrowGettingReady = true;
 					}
@@ -366,7 +369,15 @@ void AWarriorCharacter::Jump()
 {
 	if(CombatState == ECombatState::ECS_Unoccupied && !RollReset && !CharacterChanging)
 	{
-		ACharacter::Jump();	
+		ACharacter::Jump();
+		if(CharacterState == ECharacterState::ECS_Warrior)
+		{
+			UGameplayStatics::PlaySound2D(this, WarriorJumpSoundCue);
+		}
+		else
+		{
+			UGameplayStatics::PlaySound2D(this, ArcherJumpSoundCue);
+		}
 	}
 	
 }
@@ -383,6 +394,7 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Grux,GruxHitReactSoundCue);
 			if(BasicAttackState == EBasicAttackState::EBAS_FirstAttack && HitReactChance > 0.3f)
 			{
 				AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
@@ -415,6 +427,7 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Khaimera,KhaimeraHitReactSoundCue);
 			if(BasicAttackState == EBasicAttackState::EBAS_FirstAttack && HitReactChance > 0.3f)
 			{
 				AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
@@ -447,7 +460,7 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
 		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
 		{
-			
+			UGameplayStatics::PlaySound2D(Narbash,NarbashHitReactSoundCue);
 			if(BasicAttackState == EBasicAttackState::EBAS_FirstAttack && HitReactChance > 0.3f)
 			{
 				AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
@@ -592,6 +605,7 @@ void AWarriorCharacter::PlayAttackMontage()
 		}
 		if(CharacterState == ECharacterState::ECS_Warrior)
 		{
+			UGameplayStatics::PlaySound2D(this,WarriorBasicAttackSoundCue);
 			AnimInstance->Montage_Play(WarriorAttackMontage);
 			AnimInstance->Montage_JumpToSection(FName("FirstBasicAttack"));
 			CombatState = ECombatState::ECS_FireTimerInProgress;
@@ -774,6 +788,17 @@ void AWarriorCharacter::RollResetFunction()
 	RollReset = false;
 }
 
+EPhysicalSurface AWarriorCharacter::GetSurfaceTypes()
+{
+	FHitResult HitResult;
+	const FVector Start{ GetActorLocation()};
+	const FVector End{ Start + FVector(0.f,0.f, -400.f)};
+	FCollisionQueryParams QueryParams;
+	QueryParams.bReturnPhysicalMaterial = true;
+	GetWorld()->LineTraceSingleByChannel(HitResult,Start,End,ECollisionChannel::ECC_Visibility,QueryParams);
+	return UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
+}
+
 void AWarriorCharacter::FirstSkill()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -781,6 +806,7 @@ void AWarriorCharacter::FirstSkill()
 	{
 		if(CharacterState == ECharacterState::ECS_Warrior && WarriorFirstSkillCooldown <= 0 && CharacterMana >= 5.f)
 		{
+			UGameplayStatics::PlaySound2D(this,WarriorShieldSoundCue);
 			AnimInstance->Montage_Play(WarriorCharacterSkillSet);
 			AnimInstance->Montage_JumpToSection(FName("FirstSkill"));
 			CombatState = ECombatState::ECS_FireTimerInProgress;
@@ -815,6 +841,7 @@ void AWarriorCharacter::SecondSkill()
 	{
 		if(CharacterState == ECharacterState::ECS_Warrior && WarriorSecondSkillCooldown <= 0 && CharacterMana >= 20.f)
 		{
+			UGameplayStatics::PlaySound2D(this,WarriorThunderStormSoundCue);
 			CombatState = ECombatState::ECS_FireTimerInProgress;
 			CharacterMana -= 20.f;
 			WarriorSecondSkillCooldown = 8.f;
@@ -848,11 +875,12 @@ void AWarriorCharacter::ThirdSkill()
 	{
 		if(CharacterState == ECharacterState::ECS_Warrior && WarriorThirdSkillCooldown <= 0 && CharacterMana >= 25.f)
 		{
+			UGameplayStatics::PlaySound2D(this,WarriorEarthSlamSoundCue);
 			CharacterMana -= 25.f;
 			WarriorThirdSkillCooldown = 14.f;
 			AnimInstance->Montage_Play(WarriorCharacterSkillSet);
 			AnimInstance->Montage_JumpToSection(FName("ThirdSkill"));
-			GetWorldTimerManager().SetTimer(WarriorThirdSkillFXTimer, this, &AWarriorCharacter::PlayWarriorThirdFX, 0.95f);
+			GetWorldTimerManager().SetTimer(WarriorThirdSkillFXTimer, this, &AWarriorCharacter::PlayWarriorThirdFX, 1.4f);
 			CombatState = ECombatState::ECS_FireTimerInProgress;
 			ThirdSkillCooldownReset();
 		}

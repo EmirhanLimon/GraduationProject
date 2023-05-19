@@ -60,6 +60,7 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	{
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Grux,Character->GetGruxHitReactSoundCue());
 			UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
 			AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
@@ -72,6 +73,7 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	{
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Khaimera,Character->GetKhaimeraHitReactSoundCue());
 			UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
 			AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
@@ -84,6 +86,7 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	{
 		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Narbash,Character->GetNarbashHitReactSoundCue());
 			UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
 			AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
 			AnimInstance->Montage_JumpToSection(FName("Front"));

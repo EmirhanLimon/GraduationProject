@@ -111,6 +111,14 @@ void ANarbash::Die()
 
 void ANarbash::Destroyed()
 {
+	if(!IsValid(Character))
+	{
+		Character = Cast<AWarriorCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	else
+	{
+		Character->SetWaveState(EWaveState::EWS_WaveFive);
+	}
 	Destroy();
 }
 
@@ -151,6 +159,7 @@ void ANarbash::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 			}
 			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetWarriorHitReactSoundCue());
 				if(bBehind)
 				{
 					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
@@ -165,6 +174,7 @@ void ANarbash::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 			}
 			if(Character->GetCharacterState() == ECharacterState::ECS_Archer)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetArcherHitReactSoundCue());
 				if(bBehind)
 				{
 					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());

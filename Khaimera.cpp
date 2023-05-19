@@ -205,8 +205,9 @@ void AKhaimera::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 				Character->GetCameraManager()->StartCameraShake(Character->GetCameraShakeHitReact(),1);
 			}
 			const float HitReacts = FMath::RandRange(0.f, 1.f);
-			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior && HitReacts <= 0.5f)
+			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior && HitReacts <= 0.75f)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetWarriorHitReactSoundCue());
 				if(bBehind)
 				{
 					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
@@ -219,8 +220,9 @@ void AKhaimera::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 				}
 				Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
 			}
-			if(Character->GetCharacterState() == ECharacterState::ECS_Archer && HitReacts <= 0.5f)
+			if(Character->GetCharacterState() == ECharacterState::ECS_Archer && HitReacts <= 0.75f)
 			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetArcherHitReactSoundCue());
 				if(bBehind)
 				{
 					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());

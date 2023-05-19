@@ -50,7 +50,9 @@ void AArrow::BeginPlay()
 		Character->GetPickUpItem(this);
 		ArrowMovementComponent->ProjectileGravityScale = ArrowMovementComponent->ProjectileGravityScale - (Character->ArrowSpeed * 0.03f);
 		StartCameraShake();
+		UGameplayStatics::PlaySound2D(Character,ArrowSoundCue);
 	}
+	
 	/*TSubclassOf<AGrux> classToFind;
 	classToFind = AGrux::StaticClass();
 	TArray<AActor*> foundEnemies;
@@ -132,7 +134,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		{
 			if(Character->GetSwitchCounter() == 1)
 			{
-				Grux->SetGruxHealth(Grux->GetGruxHealth() - (20.f + (Character->ArrowSpeed / 10)));
+				Grux->SetGruxHealth(Grux->GetGruxHealth() - (20.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			else if(Character->GetSwitchCounter() == 2)
 			{
@@ -140,15 +142,20 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			}
 			else
 			{
-				Grux->SetGruxHealth(Grux->GetGruxHealth() - (10.f + (Character->ArrowSpeed / 10)));
+				Grux->SetGruxHealth(Grux->GetGruxHealth() - (10.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 			{
-				UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
-				AnimInstance->Montage_JumpToSection(FName("Front"));
-				Grux->SetGruxCombatState(EGruxCombatState::EGCS_FireTimerInProgress);
-				Grux->GetCharacterMovement()->MaxWalkSpeed = 0;
+				const float HitReactChance = FMath::FRandRange(0.f,1.f);
+				if(HitReactChance <= 0.75f)
+				{
+					UGameplayStatics::PlaySound2D(Grux,Character->GetGruxHitReactSoundCue());
+					UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
+					AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+					Grux->SetGruxCombatState(EGruxCombatState::EGCS_FireTimerInProgress);
+					Grux->GetCharacterMovement()->MaxWalkSpeed = 0;
+				}
 			}
 			if(Grux->GetPawnSensingComponent())
 			{
@@ -164,7 +171,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		{
 			if(Character->GetSwitchCounter() == 1)
 			{
-				Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - (25.f + (Character->ArrowSpeed / 10)));
+				Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - (25.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			else if(Character->GetSwitchCounter() == 2)
 			{
@@ -172,15 +179,20 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			}
 			else
 			{
-				Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - (10.f + (Character->ArrowSpeed / 10)));
+				Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - (10.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 			{
-				UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
-				AnimInstance->Montage_JumpToSection(FName("Front"));
-				Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
-				Khaimera->GetCharacterMovement()->MaxWalkSpeed = 0;
+				const float HitReactChance = FMath::FRandRange(0.f,1.f);
+				if(HitReactChance <= 0.75f)
+				{
+					UGameplayStatics::PlaySound2D(Khaimera,Character->GetKhaimeraHitReactSoundCue());
+					UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
+					AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+					Khaimera->SetKhaimeraCombatState(EKhaimeraCombatState::EKCS_FireTimerInProgress);
+					Khaimera->GetCharacterMovement()->MaxWalkSpeed = 0;
+				}
 			}
 			if(Khaimera->GetPawnSensingComponent())
 			{
@@ -196,7 +208,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		{
 			if(Character->GetSwitchCounter() == 1)
 			{
-				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - (25.f + (Character->ArrowSpeed / 10)));
+				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - (25.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			else if(Character->GetSwitchCounter() == 2)
 			{
@@ -204,15 +216,20 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			}
 			else
 			{
-				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - (10.f + (Character->ArrowSpeed / 10)));
+				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - (10.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
 			{
-				UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
-				AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
-				AnimInstance->Montage_JumpToSection(FName("Front"));
-				Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
-				Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
+				const float HitReactChance = FMath::FRandRange(0.f,1.f);
+				if(HitReactChance <= 0.25f)
+				{
+					UGameplayStatics::PlaySound2D(Narbash,Character->GetNarbashHitReactSoundCue());
+					UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
+					AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+					Narbash->SetNarbashCombatState(ENarbashCombatState::ENCS_FireTimerInProgress);
+					Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
+				}
 			}
 			if(Narbash->GetPawnSensingComponent())
 			{
@@ -228,7 +245,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		{
 			if(Character->GetSwitchCounter() == 1)
 			{
-				Fey->SetFeyHealth(Fey->GetFeyHealth() - (25.f + (Character->ArrowSpeed / 10)));
+				Fey->SetFeyHealth(Fey->GetFeyHealth() - (25.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			else if(Character->GetSwitchCounter() == 2)
 			{
@@ -236,10 +253,11 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			}
 			else
 			{
-				Fey->SetFeyHealth(Fey->GetFeyHealth() - (10.f + (Character->ArrowSpeed / 10)));
+				Fey->SetFeyHealth(Fey->GetFeyHealth() - (10.f + (Character->ArrowDamageWithSpeed / 10)));
 			}
 			if(Fey->GetFeyCombatState() == EFeyCombatState::EFCS_Unoccupied)
 			{
+				UGameplayStatics::PlaySound2D(Fey,Character->GetFeyHitReactSoundCue());
 				UAnimInstance* AnimInstance = Fey->GetMesh()->GetAnimInstance();
 				AnimInstance->Montage_Play(Fey->GetFeyHitReacts());
 				AnimInstance->Montage_JumpToSection(FName("Front"));
@@ -263,7 +281,6 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		{
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ArrowDestroyParticle, GetActorLocation());
 		}
-		//Character->SetReinforcedArrowUsing(false);
 		if(Character->GetSwitchCounter() == 1 || Character->GetSwitchCounter() == 2)
 		{
 			Character->SetSwitchCounter(0);
@@ -271,6 +288,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		Destroy();
 		ClampValue = 0;
 		Alpha = 0;
+		Character->ArrowDamageWithSpeed = 0;
 	}
 }
 

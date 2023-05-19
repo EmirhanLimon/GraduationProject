@@ -19,7 +19,13 @@ ARampage::ARampage() :
 	bCanAttack(true),
 	bLeftArmCanDamage(false),
 	bRightArmCanDamage(false),
-	RampageHealth(750.f)
+	RampageHealth(750.f),
+	bTraining(true),
+	bCanJump(false),
+	JumpAmount(0),
+	bMovementStop(false),
+	bFirstJump(false),
+	bSecondJump(false)
 {
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -46,22 +52,64 @@ void ARampage::BeginPlay()
 
 	LeftArmBoxComponent->OnComponentBeginOverlap.AddDynamic(this,&ARampage::LeftArmOverlap);
 	RightArmBoxComponent->OnComponentBeginOverlap.AddDynamic(this,&ARampage::RightArmOverlap);
-	
+	PlayTrainingMontage();
 	FTimerHandle aaa;
-	GetWorldTimerManager().SetTimer(aaa,this,&ARampage::PlayThrowStoneAnimMontage,3.f);
+	GetWorldTimerManager().SetTimer(aaa,this,&ARampage::PlayThrowStoneAnimMontage,5.f);
 	FTimerHandle bbb;
-	GetWorldTimerManager().SetTimer(bbb,this,&ARampage::Jump,6.f);
+	GetWorldTimerManager().SetTimer(bbb,this,&ARampage::CanJump,20.f);
 }
 
 void ARampage::OnHearNoise(APawn* OtherActor, const FVector& Location, float Volume)
 {
 	if(OtherActor == nullptr) return;
 	Character = Cast<AWarriorCharacter>(OtherActor);
-	if(Character && !bRampageDied && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && !bIsInAir)
+	if(Character && !bRampageDied && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && !bIsInAir && !bTraining)
 	{
-		AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
-		GetCharacterMovement()->MaxWalkSpeed = 1000;
+		if(bMovementStop && bFirstJump && !bSecondJump)
+		{
+			AIC_Ref->MoveToLocation(FirstJumpTargetLocation, -1.f);
+			GetCharacterMovement()->MaxWalkSpeed = 1000;
+			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("12312"));
+		}
+		else if(bMovementStop && bFirstJump && bSecondJump)
+		{
+			AIC_Ref->MoveToLocation(SecondJumpTargetLocation, -1.f);
+			GetCharacterMovement()->MaxWalkSpeed = 1000;
+			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("12312"));
+		}
+		else
+		{
+			AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
+			GetCharacterMovement()->MaxWalkSpeed = 1000;
+			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("12312"));
+		}
 	}
+
+}
+
+void ARampage::CanJump()
+{
+	FTimerHandle ccc;
+	if(JumpAmount <= 1)
+	{
+		GetWorldTimerManager().SetTimer(ccc,this,&ARampage::CanJump,20.f);
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(ccc);
+	}
+	bCanJump = true;
+}
+
+void ARampage::PlayTrainingMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if(AnimInstance)
+	{
+		AnimInstance->Montage_Play(TrainingMontage);
+		AnimInstance->Montage_JumpToSection(FName("Training"));
+	}
+	UGameplayStatics::PlaySound2D(this,TrainingSoundCue);
 }
 
 void ARampage::ThrowStone()
@@ -81,10 +129,11 @@ void ARampage::PlayThrowStoneAnimMontage()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if(AnimInstance && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && !bRampageDied)
 	{
+		UGameplayStatics::PlaySound2D(this,ThrowStoneSoundCue);
 		AnimInstance->Montage_Play(ThrowStoneMontage);
 		AnimInstance->Montage_JumpToSection(FName("ThrowStone"));
 		FTimerHandle SpawnStoneTimer;
-		GetWorldTimerManager().SetTimer(SpawnStoneTimer, this, &ARampage::ThrowStone, 0.3f);
+		GetWorldTimerManager().SetTimer(SpawnStoneTimer, this, &ARampage::ThrowStone, 0.4f);
 	}
 }
 
@@ -106,7 +155,9 @@ void ARampage::PlayJumpEndFX()
 		if(CameraShakeJumpEnd && Character->GetCameraManager() && Character)
 		{
 			Character->GetCameraManager()->StartCameraShake(CameraShakeJumpEnd,1);
+			UGameplayStatics::PlaySound2D(this,Character->GetStoneHitWorldSoundCue());
 			bJumping = false;
+			bMovementStop = false;
 		}
 	}
 }
@@ -119,6 +170,7 @@ void ARampage::Attack()
 		const float RandomAttackState = FMath::FRandRange(0.f,1.f);
 		if(RandomAttackState >= 0.f && RandomAttackState < 0.2f)
 		{
+			UGameplayStatics::PlaySound2D(this,ThrowStoneSoundCue);
 			AnimInstance->Montage_Play(AttackMontage);
 			AnimInstance->Montage_JumpToSection(FName("GroundSmash"));
 			FTimerHandle SpawnGroundSmashTimer;
@@ -126,21 +178,25 @@ void ARampage::Attack()
 		}
 		else if(RandomAttackState >= 0.2f && RandomAttackState < 0.4f)
 		{
+			UGameplayStatics::PlaySound2D(this,AttackSoundCue);
 			AnimInstance->Montage_Play(AttackMontage);
 			AnimInstance->Montage_JumpToSection(FName("FirstBasicAttack"));
 		}
 		else if(RandomAttackState >= 0.4f && RandomAttackState < 0.6f)
 		{
+			UGameplayStatics::PlaySound2D(this,AttackSoundCue);
 			AnimInstance->Montage_Play(AttackMontage);
 			AnimInstance->Montage_JumpToSection(FName("SecondBasicAttack"));
 		}
 		else if(RandomAttackState >= 0.6f && RandomAttackState < 0.8f)
 		{
+			UGameplayStatics::PlaySound2D(this,AttackSoundCue);
 			AnimInstance->Montage_Play(AttackMontage);
 			AnimInstance->Montage_JumpToSection(FName("ThirdBasicAttack"));
 		}
 		else
 		{
+			UGameplayStatics::PlaySound2D(this,AttackSoundCue);
 			AnimInstance->Montage_Play(AttackMontage);
 			AnimInstance->Montage_JumpToSection(FName("FourthBasicAttack"));
 		}
@@ -161,15 +217,16 @@ void ARampage::GroundSmashSpawn()
 		}
 	}
 }
-
 void ARampage::Jump()
 {
+	JumpAmount++;
 	Super::Jump();
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if(AnimInstance)
 	{
 		AnimInstance->Montage_Play(JumpMontage);
 		AnimInstance->Montage_JumpToSection(FName("Jump"));
+		UGameplayStatics::PlaySound2D(this,JumpSoundCue);
 	}
 	FTimerHandle JumpingTimer;
 	GetWorldTimerManager().SetTimer(JumpingTimer,this,&ARampage::Jumping,0.5f);
@@ -245,16 +302,28 @@ void ARampage::Tick(float DeltaTime)
 		{
 			Character->SetRampageRendered(false);
 		}
-		Distance = FVector::Distance(GetActorLocation(),Character->GetActorLocation());
+		Distance = FVector::Distance(GetActorLocation(),FirstJumpTargetLocation);
 		if(bIsInAir)
 		{
 			if(Distance > 1000.f)
 			{
-				ClampValue =  FMath::Clamp((Alpha + 0.2f),0,1);
-				Alpha = ClampValue;
-				FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),Character->GetActorLocation());
-				FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
-				SetActorRotation(FRotator(GetActorRotation().Pitch,NewRotation.Yaw,NewRotation.Roll));	
+				if(bFirstJump && !bSecondJump)
+				{
+					ClampValue =  FMath::Clamp((Alpha + 0.2f),0,1);
+					Alpha = ClampValue;
+					FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),FirstJumpTargetLocation);
+					FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
+					SetActorRotation(FRotator(GetActorRotation().Pitch,NewRotation.Yaw,NewRotation.Roll));	
+				}
+				else
+				{
+					ClampValue =  FMath::Clamp((Alpha + 0.2f),0,1);
+					Alpha = ClampValue;
+					FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),SecondJumpTargetLocation);
+					FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
+					SetActorRotation(FRotator(GetActorRotation().Pitch,NewRotation.Yaw,NewRotation.Roll));
+				}
+	
 			}
 			SetActorLocation(GetActorLocation() + (GetActorForwardVector() * (Distance) * DeltaTime));
 		}
@@ -262,12 +331,41 @@ void ARampage::Tick(float DeltaTime)
 		{
 			PlayJumpEndFX();
 		}
-		if(!bIsInAir && !bJumping && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && Distance < 500.f && bCanAttack)
+		if(!bIsInAir && !bJumping && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && Distance < 600.f && bCanAttack)
 		{
 			GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Blue,TEXT("131233213"));
 			Attack();
 			RampageCombatState = ERampageCombatState::ERCS_FireTimerInProgress;
 			bCanAttack = false;
+		}
+		if(!bIsInAir && !bJumping && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && bCanJump)
+		{
+			if(JumpAmount == 0)
+			{
+				float FirstJumpDistance = FVector::Distance(GetActorLocation(),FirstJumpTargetLocation);
+				if(FirstJumpDistance > 5500 && !bFirstJump)
+				{
+					bCanJump = false;
+					bFirstJump = true;
+					bMovementStop = true;
+					FTimerHandle ccc;
+					GetWorldTimerManager().SetTimer(ccc,this,&ARampage::Jump,1.f);
+				}
+			}
+			else
+			{
+				float SecondJumpDistance = FVector::Distance(GetActorLocation(),SecondJumpTargetLocation);
+				if(SecondJumpDistance > 5500 && !bSecondJump)
+				{
+					bCanJump = false;
+					GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("2."));
+					bSecondJump = true;
+					bMovementStop = true;
+					FTimerHandle ccc;
+					GetWorldTimerManager().SetTimer(ccc,this,&ARampage::Jump,1.f);
+				}
+			}
+
 		}
 	}
 }

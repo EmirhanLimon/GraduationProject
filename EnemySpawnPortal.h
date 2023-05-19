@@ -49,6 +49,8 @@ private:
 	UStaticMeshComponent* StaticMeshComponentVeriable;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	bool bRotation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	USoundCue* RockFrictionSoundCue;
 };
 
 

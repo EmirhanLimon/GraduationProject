@@ -69,6 +69,7 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	{
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Grux,Character->GetGruxHitReactSoundCue());
 			UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
 			AnimInstance->Montage_Play(Grux->GetGruxHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
@@ -80,6 +81,7 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	{
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Khaimera,Character->GetKhaimeraHitReactSoundCue());
 			UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
 			AnimInstance->Montage_Play(Khaimera->GetKhaimeraHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
@@ -91,6 +93,7 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	{
 		if(Fey->GetFeyCombatState() == EFeyCombatState::EFCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Fey,Character->GetFeyHitReactSoundCue());
 			UAnimInstance* AnimInstance = Fey->GetMesh()->GetAnimInstance();
 			AnimInstance->Montage_Play(Fey->GetFeyHitReacts());
 			AnimInstance->Montage_JumpToSection(FName("Front"));
@@ -102,6 +105,7 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	{
 		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
 		{
+			UGameplayStatics::PlaySound2D(Narbash,Character->GetNarbashHitReactSoundCue());
 			UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
 			AnimInstance->Montage_Play(Narbash->GetHitReactsAnimMontage());
 			AnimInstance->Montage_JumpToSection(FName("Front"));

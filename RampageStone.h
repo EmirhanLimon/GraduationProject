@@ -49,5 +49,6 @@ private:
 	UParticleSystem* RockHitWorldParticle;
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 	TSubclassOf<UCameraShakeBase> CameraShakeHitStone;
+
 	
 };
