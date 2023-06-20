@@ -116,7 +116,8 @@ void ARampageStone::Tick(float DeltaTime)
 		ClampValue =  FMath::Clamp((Alpha + 0.2f),0,1);
 		Alpha = ClampValue;
 		TargetLocation = FMath::VInterpTo(FVector(0,0,TargetLocation.Z),FVector(0,0,50) , DeltaTime, 10.f);
-		FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),FVector(FirstTargetLocation.X,FirstTargetLocation.Y,TargetLocation.Z) + Character->GetActorForwardVector());
+		FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),
+			FVector(FirstTargetLocation.X,FirstTargetLocation.Y,TargetLocation.Z) + Character->GetActorForwardVector());
 		FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
 		SetActorRotation(NewRotation);
 		SetActorLocation(GetActorLocation() + ((GetActorForwardVector() * 13000.f) * DeltaTime));

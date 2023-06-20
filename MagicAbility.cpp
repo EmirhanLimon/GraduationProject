@@ -4,6 +4,7 @@
 #include "Grux.h"
 #include "Khaimera.h"
 #include "Narbash.h"
+#include "Rampage.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -65,8 +66,13 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	AFey* Fey = Cast<AFey>(OtherActor);
 	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
 	if(Grux)
 	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 		{
 			UGameplayStatics::PlaySound2D(Grux,Character->GetGruxHitReactSoundCue());
@@ -79,6 +85,10 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	}
 	if(Khaimera)
 	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 		{
 			UGameplayStatics::PlaySound2D(Khaimera,Character->GetKhaimeraHitReactSoundCue());
@@ -91,6 +101,10 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	}
 	if(Fey)
 	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
 		if(Fey->GetFeyCombatState() == EFeyCombatState::EFCS_Unoccupied)
 		{
 			UGameplayStatics::PlaySound2D(Fey,Character->GetFeyHitReactSoundCue());
@@ -103,6 +117,10 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 	}
 	if(Narbash && !Narbash->GetInvincibility())
 	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
 		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
 		{
 			UGameplayStatics::PlaySound2D(Narbash,Character->GetNarbashHitReactSoundCue());
@@ -112,6 +130,14 @@ void AMagicAbility::MagicAbilityOverlap(UPrimitiveComponent* OverlappedComponent
 			Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
 		}
 		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 5.f);
+	}
+	if(Rampage)
+	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
+		Rampage->SetRampageHealth(Rampage->GetRampageHealth() - 5.f);
 	}
 }
 

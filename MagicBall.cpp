@@ -54,7 +54,7 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	{
 		if(!Character->GetInvincibility())
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 4);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
@@ -62,7 +62,7 @@ void AMagicBall::AttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 		}
 		else
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 4);
 			if(Character->GetCharacterHealth() >= 100)
 			{
 				Character->SetCharacterHealth(100);

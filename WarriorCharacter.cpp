@@ -25,6 +25,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "GraduationProject.h"
+#include "Rampage.h"
 
 
 AWarriorCharacter::AWarriorCharacter() :
@@ -88,7 +89,8 @@ AWarriorCharacter::AWarriorCharacter() :
 	EnemySpawning(false),
 	ArrowDamageWithSpeed(0.f),
 	WaveState(EWaveState::EWS_WaveOne),
-	ArrowGettingReady(false)
+	ArrowGettingReady(false),
+	bCharacterDied(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -160,7 +162,7 @@ void AWarriorCharacter::BeginPlay()
 }
 
 void AWarriorCharacter::MoveForward(float Value) {
-	if ((Controller != nullptr) && (Value != 0.0f) && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging) {
+	if ((Controller != nullptr) && (Value != 0.0f) && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging && !bCharacterDied) {
 		
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
@@ -171,7 +173,7 @@ void AWarriorCharacter::MoveForward(float Value) {
 
 void AWarriorCharacter::MoveRight(float Value) {
 
-	if ((Controller != nullptr) && (Value != 0.0f) && !bIsInAir  && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging) {
+	if ((Controller != nullptr) && (Value != 0.0f) && !bIsInAir  && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging && !bCharacterDied) {
 
 		const FRotator Rotation{ Controller->GetControlRotation() };
 		const FRotator YawRotation{ 0, Rotation.Yaw, 0 };
@@ -182,7 +184,7 @@ void AWarriorCharacter::MoveRight(float Value) {
 
 void AWarriorCharacter::TurnAtRate(float Rate) {
 
-	if(CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging)
+	if(CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging && !bCharacterDied)
 	{
 		AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 	}
@@ -191,7 +193,7 @@ void AWarriorCharacter::TurnAtRate(float Rate) {
 
 void AWarriorCharacter::LookUpAtRate(float Rate) {
 
-	if(CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging)
+	if(CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging && !bCharacterDied)
 	{
 		AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 	}
@@ -200,7 +202,7 @@ void AWarriorCharacter::LookUpAtRate(float Rate) {
 
 void AWarriorCharacter::AddControllerYawInput(float Value)
 {
-	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior  && !Rolling)
+	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior  && !Rolling && !bCharacterDied)
 	{
 		APawn::AddControllerYawInput(Value);
 	}
@@ -214,7 +216,7 @@ void AWarriorCharacter::AddControllerYawInput(float Value)
 
 void AWarriorCharacter::AddControllerPitchInput(float Value)
 {
-	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior && !Rolling)
+	if(CombatState == ECombatState::ECS_Unoccupied && CharacterState == ECharacterState::ECS_Warrior && !Rolling && !bCharacterDied)
 	{
 		APawn::AddControllerPitchInput(Value);
 	}
@@ -229,6 +231,11 @@ void AWarriorCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	PlayRollMontage(DeltaTime);
+	if(CharacterHealth <= 0 && !bCharacterDied)
+	{
+		bCharacterDied = true;
+		CharacterDie();
+	}
 	PawnNoiseEmitterComponent->MakeNoise(this,1.0f,GetActorLocation());
 	if(CharacterState == ECharacterState::ECS_Warrior)
 	{
@@ -243,7 +250,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 	}
 	else
 	{
-		if((FastArrowFire || RainOfArrowUsing) && (DistanceTargetEnemy < 2500))
+		if((FastArrowFire || RainOfArrowUsing) && (DistanceTargetEnemy < 2500) && !bCharacterDied)
 		{
 			ClampValue =  FMath::Clamp((Alpha + 0.03f),0,1);
 			Alpha = ClampValue;
@@ -256,7 +263,7 @@ void AWarriorCharacter::Tick(float DeltaTime)
 }
 
 void AWarriorCharacter::SpeedBoost(float Value) {
-	if (Value > 0.f && SpeedBoostValue > 0 && SpeedBoostCooldown <= 0 && !SpeedBoostCooldownControl && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging) {
+	if (Value > 0.f && SpeedBoostValue > 0 && SpeedBoostCooldown <= 0 && !SpeedBoostCooldownControl && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging && !bCharacterDied) {
 		bSpeedBoost = true;
 		SpeedBoostValue -= Value * 0.1f;
 		GetCharacterMovement()->MaxWalkSpeed = 800.f;
@@ -277,7 +284,7 @@ void AWarriorCharacter::SpeedBoost(float Value) {
 
 void AWarriorCharacter::Spin(float DeltaTime)
 {
-	if(TurnSkillUsing)
+	if(TurnSkillUsing && !bCharacterDied)
 	{
 		FRotator Rotation(TurnFloorCollisionSphere->GetComponentRotation().Roll,TurnFloorCollisionSphere->GetComponentRotation().Pitch,TurnFloorCollisionSphere->GetComponentRotation().Yaw + (0.001 *DeltaTime));
 		TurnFloorCollisionSphere->SetWorldRotation(Rotation);
@@ -298,7 +305,7 @@ void AWarriorCharacter::SpeedBoostCooldownTimerFunction()
 
 void AWarriorCharacter::Roll()
 {
-	if(!CharacterChanging && !Rolling &&  CombatState == ECombatState::ECS_Unoccupied)
+	if(!CharacterChanging && !Rolling &&  CombatState == ECombatState::ECS_Unoccupied && !bCharacterDied)
 	{
 		RollClick++;
 		if(RollClick == 1  && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging)
@@ -312,7 +319,7 @@ void AWarriorCharacter::Roll()
 
 void AWarriorCharacter::ArcherBasicAttack(float Value)
 {
-	if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !RainOfArrowUsing &&!ArcherBasicAttackReset && !CharacterChanging && (SwitchCounter == 0 || SwitchCounter == 1))
+	if(CharacterState == ECharacterState::ECS_Archer && !bIsInAir && !RainOfArrowUsing &&!ArcherBasicAttackReset && !CharacterChanging && (SwitchCounter == 0 || SwitchCounter == 1) && !bCharacterDied)
 	{
 		const USkeletalMeshSocket* ArrowSpawnSocket = GetMesh()->GetSocketByName(FName("ArrowSpawnSocket"));
 		if(ArrowSpawnSocket && GetWorld())
@@ -359,7 +366,7 @@ void AWarriorCharacter::WarriorBasicAttack()
 {
 	WarriorBasicAttackClick = true;
 	if(CharacterState == ECharacterState::ECS_Warrior && !bIsInAir && BasicAttackState == EBasicAttackState::EBAS_Unoccupied &&
-		!CharacterChanging && CombatState == ECombatState::ECS_Unoccupied && !Rolling)
+		!CharacterChanging && CombatState == ECombatState::ECS_Unoccupied && !Rolling && !bCharacterDied)
 	{
 		PlayAttackMontage();
 	}
@@ -367,7 +374,7 @@ void AWarriorCharacter::WarriorBasicAttack()
 
 void AWarriorCharacter::Jump()
 {
-	if(CombatState == ECombatState::ECS_Unoccupied && !RollReset && !CharacterChanging)
+	if(CombatState == ECombatState::ECS_Unoccupied && !RollReset && !CharacterChanging && !bCharacterDied)
 	{
 		ACharacter::Jump();
 		if(CharacterState == ECharacterState::ECS_Warrior)
@@ -388,8 +395,14 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
 	if(Grux && SwordAttacking && !Grux->GetDied())
 	{
+		if(ChangeCharacterFormValue <= 99)
+		{
+			ChangeCharacterFormValue += 1.f;
+		}
+
 		const float HitReactChance = FMath::FRandRange(0.f, 1.f);
 		UAnimInstance* AnimInstance = Grux->GetMesh()->GetAnimInstance();
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
@@ -418,11 +431,13 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		SwordAttacking = false;
 		if(BloodFXParticle)
 		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),BloodFXParticle,Grux->GetActorLocation() + (Grux->GetActorForwardVector() * 50.f),FRotator(0,0,0));
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),BloodFXParticle,
+				Grux->GetActorLocation() + (Grux->GetActorForwardVector() * 50.f),FRotator(0,0,0));
 		}
 	}
 	if(Khaimera && SwordAttacking && !Khaimera->GetDied())
 	{
+		ChangeCharacterFormValue += 1.f;
 		const float HitReactChance = FMath::FRandRange(0.f, 1.f);
 		UAnimInstance* AnimInstance = Khaimera->GetMesh()->GetAnimInstance();
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
@@ -456,6 +471,7 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 	}
 	if(Narbash && SwordAttacking && !Narbash->GetDied() && !Narbash->GetInvincibility())
 	{
+		ChangeCharacterFormValue += 1.f;
 		const float HitReactChance = FMath::FRandRange(0.f, 1.f);
 		UAnimInstance* AnimInstance = Narbash->GetMesh()->GetAnimInstance();
 		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
@@ -487,6 +503,12 @@ void AWarriorCharacter::WarriorWeaponOverlap(UPrimitiveComponent* OverlappedComp
 		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 20.f);
 		SwordAttacking = false;
 	}
+	if(Rampage && SwordAttacking && !Rampage->GetRampageDied())
+	{
+		ChangeCharacterFormValue += 1.f;
+		Rampage->SetRampageHealth(Rampage->GetRampageHealth() - 20.f);
+		SwordAttacking = false;
+	}
 }
 
 void AWarriorCharacter::WarriorFirstSpinOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -495,17 +517,22 @@ void AWarriorCharacter::WarriorFirstSpinOverlap(UPrimitiveComponent* OverlappedC
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
-	if(Grux && TurnSkillUsing)
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
+	if(Grux && TurnSkillUsing && !bCharacterDied)
 	{
 		Grux->SetGruxHealth(Grux->GetGruxHealth() - 0.050f);
 	}
-	if(Khaimera && TurnSkillUsing)
+	if(Khaimera && TurnSkillUsing && !bCharacterDied)
 	{
 		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 0.050f);
 	}
-	if(Narbash && TurnSkillUsing && !Narbash->GetInvincibility())
+	if(Narbash && TurnSkillUsing && !Narbash->GetInvincibility() && !bCharacterDied)
 	{
 		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 0.050f);
+	}
+	if(Rampage && TurnSkillUsing && !bCharacterDied)
+	{
+		Rampage->SetRampageHealth(Rampage->GetRampageHealth() - 0.050f);
 	}
 }
 
@@ -515,17 +542,22 @@ void AWarriorCharacter::WarriorSecondSpinOverlap(UPrimitiveComponent* Overlapped
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
-	if(Grux  && TurnSkillUsing)
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
+	if(Grux  && TurnSkillUsing && !bCharacterDied)
 	{
 		Grux->SetGruxHealth(Grux->GetGruxHealth() - 0.050f);
 	}
-	if(Khaimera  && TurnSkillUsing)
+	if(Khaimera  && TurnSkillUsing && !bCharacterDied)
 	{
 		Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - 0.050f);
 	}
-	if(Narbash  && TurnSkillUsing && !Narbash->GetInvincibility())
+	if(Narbash  && TurnSkillUsing && !Narbash->GetInvincibility() && !bCharacterDied)
 	{
 		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 0.050f);
+	}
+	if(Rampage  && TurnSkillUsing && !bCharacterDied)
+	{
+		Rampage->SetRampageHealth(Rampage->GetRampageHealth() - 0.050f);
 	}
 }
 
@@ -534,13 +566,18 @@ void AWarriorCharacter::BehindOverlap(UPrimitiveComponent* OverlappedComponent, 
 {
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
-	if(Grux)
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
+	if(Grux && !bCharacterDied)
 	{
 		Grux->SetBehind(true);
 	}
-	if(Khaimera)
+	if(Khaimera && !bCharacterDied)
 	{
 		Khaimera->SetBehind(true);
+	}
+	if(Rampage && !bCharacterDied)
+	{
+		Rampage->SetBehind(true);
 	}
 }
 
@@ -549,20 +586,25 @@ void AWarriorCharacter::BehindEnd(UPrimitiveComponent* OverlappedComp, AActor* O
 {
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
-	if(Grux)
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
+	if(Grux && !bCharacterDied)
 	{
 		Grux->SetBehind(false);
 	}
-	if(Khaimera)
+	if(Khaimera && !bCharacterDied)
 	{
 		Khaimera->SetBehind(false);
+	}
+	if(Rampage && !bCharacterDied)
+	{
+		Rampage->SetBehind(false);
 	}
 }
 
 void AWarriorCharacter::PlayRollMontage(float DeltaTime)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(AnimInstance && TumbleMontage && !bIsInAir && RollClick == 2 && !RollReset && !CharacterChanging)
+	if(AnimInstance && TumbleMontage && !bIsInAir && RollClick == 2 && !RollReset && !CharacterChanging && !bCharacterDied)
 	{
 		Rolling = true;
 		if(CharacterState == ECharacterState::ECS_Warrior && CombatState == ECombatState::ECS_Unoccupied)
@@ -585,7 +627,7 @@ void AWarriorCharacter::PlayRollMontage(float DeltaTime)
 		}
 		
 	}
-	if(Rolling)
+	if(Rolling && !bCharacterDied)
 	{
 		Velocity =  GetCharacterMovement()->Velocity;
 		Velocity = FMath::VInterpTo(Velocity,TargetVelocity , DeltaTime, 15.f);
@@ -596,7 +638,7 @@ void AWarriorCharacter::PlayRollMontage(float DeltaTime)
 void AWarriorCharacter::PlayAttackMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(AnimInstance && !bIsInAir && !ArcherBasicAttackReset && !WarriorBasicAttackReset)
+	if(AnimInstance && !bIsInAir && !ArcherBasicAttackReset && !WarriorBasicAttackReset && !bCharacterDied)
 	{
 		if(CharacterState == ECharacterState::ECS_Archer)
 		{
@@ -653,7 +695,7 @@ void AWarriorCharacter::HealthRestore()
 
 void AWarriorCharacter::UseHealthPotion()
 {
-	if(HealthPotionAmount >= 1 && HealthPotionCooldown <= 0)
+	if(HealthPotionAmount >= 1 && HealthPotionCooldown <= 0 && !bCharacterDied)
 	{
 		HealthPotionCooldown = 30.f;
 		HealthPotionAmount -= 1.f;
@@ -664,7 +706,7 @@ void AWarriorCharacter::UseHealthPotion()
 
 void AWarriorCharacter::UseManaPotion()
 {
-	if(ManaPotionAmount >= 1 && ManaPotionCooldown <= 0)
+	if(ManaPotionAmount >= 1 && ManaPotionCooldown <= 0 && !bCharacterDied)
 	{
 		ManaPotionCooldown = 30.f;
 		ManaPotionAmount -= 1.f;
@@ -778,6 +820,34 @@ void AWarriorCharacter::ChangeCharacterTimer()
 	GetWorldTimerManager().SetTimer(TimerTrigger,this,&AWarriorCharacter::ChangeCharacterTimer,1.f);
 }
 
+void AWarriorCharacter::CharacterDie()
+{ 
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if(AnimInstance)
+	{
+		if(CharacterState == ECharacterState::ECS_Warrior)
+		{
+			AnimInstance->Montage_Play(WarriorCharacterDeathMontage);
+			AnimInstance->Montage_JumpToSection(FName("Death"));
+			FTimerHandle DieTimer;
+			GetWorldTimerManager().SetTimer(DieTimer, this, &AWarriorCharacter::Destroyed,1.1f);
+		}
+		else
+		{
+			AnimInstance->Montage_Play(ArcherCharacterDeathMontage);
+			AnimInstance->Montage_JumpToSection(FName("Death"));
+			FTimerHandle DieTimer;
+			GetWorldTimerManager().SetTimer(DieTimer, this, &AWarriorCharacter::Destroyed,0.7f);
+		}
+
+	}
+}
+
+void AWarriorCharacter::Destroyed()
+{
+	Destroy();
+}
+
 void AWarriorCharacter::ClickResetFunction()
 {
 	RollClick = 0;
@@ -802,9 +872,9 @@ EPhysicalSurface AWarriorCharacter::GetSurfaceTypes()
 void AWarriorCharacter::FirstSkill()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging && !Rolling)
+	if(AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging && !Rolling && !bCharacterDied)
 	{
-		if(CharacterState == ECharacterState::ECS_Warrior && WarriorFirstSkillCooldown <= 0 && CharacterMana >= 5.f)
+		if(CharacterState == ECharacterState::ECS_Warrior && WarriorFirstSkillCooldown <= 0 && CharacterMana >= 20.f)
 		{
 			UGameplayStatics::PlaySound2D(this,WarriorShieldSoundCue);
 			AnimInstance->Montage_Play(WarriorCharacterSkillSet);
@@ -816,7 +886,8 @@ void AWarriorCharacter::FirstSkill()
 				CharacterMana -= 20.f;
 				WarriorFirstSkillCooldown = 20.f;
 				FVector SpawnLocation(GetActorLocation().X,GetActorLocation().Y,GetActorLocation().Z + 50.f);
-				WarriorFirstFXParticleComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WarriorFirstFXParticle,SpawnLocation + (GetActorForwardVector() * 50.f) ,GetActorRotation());
+				WarriorFirstFXParticleComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
+					WarriorFirstFXParticle,SpawnLocation + (GetActorForwardVector() * 50.f) ,GetActorRotation());
 				FTimerHandle DestroyFirstSkillTimer;
 				GetWorldTimerManager().SetTimer(DestroyFirstSkillTimer, this, &AWarriorCharacter::DestroyFirstSkillFX, 0.90f);
 				FirstSkillCooldownReset();
@@ -837,7 +908,7 @@ void AWarriorCharacter::SecondSkill()
 {
 	
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging  && !Rolling)
+	if(AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging  && !Rolling && !bCharacterDied)
 	{
 		if(CharacterState == ECharacterState::ECS_Warrior && WarriorSecondSkillCooldown <= 0 && CharacterMana >= 20.f)
 		{
@@ -851,7 +922,8 @@ void AWarriorCharacter::SecondSkill()
 			GetWorldTimerManager().SetTimer(SpawnSecondSkillTimer, this, &AWarriorCharacter::PlayWarriorSecondFX, 0.55f);
 			SecondSkillCooldownReset();
 		}
-		if(CharacterState == ECharacterState::ECS_Archer && DistanceTargetEnemy < 2500 && ArcherSecondSkillCooldown <= 0 && CharacterMana >= 20.f && (GruxRendered || FeyRendered || KhaimeraRendered || NarbashRendered ||	RampageRendered))
+		if(CharacterState == ECharacterState::ECS_Archer && DistanceTargetEnemy < 2500 &&
+			ArcherSecondSkillCooldown <= 0 && CharacterMana >= 20.f && (GruxRendered || FeyRendered || KhaimeraRendered || NarbashRendered ||	RampageRendered))
 		{
 			CharacterMana -= 20.f;
 			ArcherSecondSkillCooldown = 9.f;
@@ -871,7 +943,7 @@ void AWarriorCharacter::SecondSkill()
 void AWarriorCharacter::ThirdSkill()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging  && !Rolling)
+	if(AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging  && !Rolling && !bCharacterDied)
 	{
 		if(CharacterState == ECharacterState::ECS_Warrior && WarriorThirdSkillCooldown <= 0 && CharacterMana >= 25.f)
 		{
@@ -884,7 +956,8 @@ void AWarriorCharacter::ThirdSkill()
 			CombatState = ECombatState::ECS_FireTimerInProgress;
 			ThirdSkillCooldownReset();
 		}
-		if(CharacterState == ECharacterState::ECS_Archer && DistanceTargetEnemy < 2500 && ArcherThirdSkillCooldown <= 0 && CharacterMana >= 25.f  && (GruxRendered || FeyRendered || KhaimeraRendered || NarbashRendered ||	RampageRendered))
+		if(CharacterState == ECharacterState::ECS_Archer && DistanceTargetEnemy < 2500 &&
+			ArcherThirdSkillCooldown <= 0 && CharacterMana >= 25.f  && (GruxRendered || FeyRendered || KhaimeraRendered || NarbashRendered ||	RampageRendered))
 		{
 			CharacterMana -= 25.f;
 			ArcherThirdSkillCooldown = 11.f;
@@ -934,7 +1007,7 @@ void AWarriorCharacter::SecondAndThirdArrow()
 void AWarriorCharacter::FourthSkill()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if(CharacterState == ECharacterState::ECS_Warrior && WarriorFourthSkillCooldown <= 0 && CharacterMana >= 20.f)
+	if(CharacterState == ECharacterState::ECS_Warrior && WarriorFourthSkillCooldown <= 0 && CharacterMana >= 20.f && !bCharacterDied)
 	{
 		if(!TurnSkillUsing)
 		{
@@ -948,7 +1021,8 @@ void AWarriorCharacter::FourthSkill()
 			FourthSkillCooldownReset();
 		}
 	}
-	if(CharacterState == ECharacterState::ECS_Archer && AnimInstance && !bIsInAir && CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging  && !Rolling && ArcherFourthSkillCooldown <= 0 && CharacterMana >= 20.f)
+	if(CharacterState == ECharacterState::ECS_Archer && AnimInstance && !bIsInAir &&
+		CombatState == ECombatState::ECS_Unoccupied && !CharacterChanging  && !Rolling && ArcherFourthSkillCooldown <= 0 && CharacterMana >= 20.f)
 	{
 		CharacterMana -= 20.f;
 		AnimInstance->Montage_Play(ArcherSkillSet);

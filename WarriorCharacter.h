@@ -119,6 +119,8 @@ private:
 	void ManaPotionTimeReset();
 	void RestoreCharacterChangeValue();
 	void ChangeCharacterTimer();
+	void CharacterDie();
+	virtual void Destroyed() override;
 	
 
 	FTimerHandle SpeedBoostCooldownTimer;
@@ -167,6 +169,8 @@ private:
 		bool SpeedBoostCooldownControl;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		bool bIsInAir;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		bool bCharacterDied;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		bool CharacterChanging;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -219,6 +223,10 @@ private:
 		FVector TargetVelocity;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* TumbleMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* WarriorCharacterDeathMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		UAnimMontage* ArcherCharacterDeathMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		UAnimMontage* ArcherRollMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
@@ -356,6 +364,7 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE uint8 GetSwitchCounter() const { return SwitchCounter; }
 	FORCEINLINE float GetAmountOfDeadEnemies() const { return AmountOfDeadEnemies; }
+	FORCEINLINE float GetChangeCharacterFormValue() const { return ChangeCharacterFormValue; }
 	FORCEINLINE FVector GetEnemyTargetLocation() const { return EnemyTargetLocation; }
 	FORCEINLINE float GetCharacterHealth() const { return CharacterHealth; }
 	FORCEINLINE float GetHealthPotionAmount() const { return HealthPotionAmount; }
@@ -404,4 +413,5 @@ public:
 	FORCEINLINE void SetSafeZone(bool NewInSafeZone) { InSafeZone = NewInSafeZone; }
 	FORCEINLINE void SetEnemySpawning(bool NewEnemySpawning) { EnemySpawning = NewEnemySpawning; }
 	FORCEINLINE void SetWaveState(EWaveState NewWaveState) { WaveState = NewWaveState; }
+	FORCEINLINE void SetChangeCharacterFormValue(float NewChangeCharacterFormValue) { ChangeCharacterFormValue = NewChangeCharacterFormValue; }
 };

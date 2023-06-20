@@ -25,7 +25,10 @@ ARampage::ARampage() :
 	JumpAmount(0),
 	bMovementStop(false),
 	bFirstJump(false),
-	bSecondJump(false)
+	bSecondJump(false),
+	bFirstJumping(false),
+	bSecondJumping(false),
+	bBehind(false)
 {
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -53,10 +56,9 @@ void ARampage::BeginPlay()
 	LeftArmBoxComponent->OnComponentBeginOverlap.AddDynamic(this,&ARampage::LeftArmOverlap);
 	RightArmBoxComponent->OnComponentBeginOverlap.AddDynamic(this,&ARampage::RightArmOverlap);
 	PlayTrainingMontage();
-	FTimerHandle aaa;
-	GetWorldTimerManager().SetTimer(aaa,this,&ARampage::PlayThrowStoneAnimMontage,5.f);
-	FTimerHandle bbb;
-	GetWorldTimerManager().SetTimer(bbb,this,&ARampage::CanJump,20.f);
+	/*FTimerHandle aaa;
+	GetWorldTimerManager().SetTimer(aaa,this,&ARampage::PlayThrowStoneAnimMontage,5.f);*/
+	GetWorldTimerManager().SetTimer(bCanJumpTrigger,this,&ARampage::CanJump,20.f);
 }
 
 void ARampage::OnHearNoise(APawn* OtherActor, const FVector& Location, float Volume)
@@ -65,39 +67,45 @@ void ARampage::OnHearNoise(APawn* OtherActor, const FVector& Location, float Vol
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && !bRampageDied && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && !bIsInAir && !bTraining)
 	{
-		if(bMovementStop && bFirstJump && !bSecondJump)
+		if(!IsValid(AIC_Ref))
 		{
-			AIC_Ref->MoveToLocation(FirstJumpTargetLocation, -1.f);
-			GetCharacterMovement()->MaxWalkSpeed = 1000;
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("12312"));
-		}
-		else if(bMovementStop && bFirstJump && bSecondJump)
-		{
-			AIC_Ref->MoveToLocation(SecondJumpTargetLocation, -1.f);
-			GetCharacterMovement()->MaxWalkSpeed = 1000;
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("12312"));
+			AIC_Ref = Cast<AEnemyController>(GetController());
 		}
 		else
 		{
-			AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
-			GetCharacterMovement()->MaxWalkSpeed = 1000;
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Blue,TEXT("12312"));
+			if(bMovementStop && bFirstJumping)
+			{
+				AIC_Ref->MoveToLocation(FirstJumpTargetLocation, -1.f);
+				GetCharacterMovement()->MaxWalkSpeed = 1000;
+				GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("12312"));
+			}
+			if(bMovementStop && bSecondJumping)
+			{
+				AIC_Ref->MoveToLocation(SecondJumpTargetLocation, -1.f);
+				GetCharacterMovement()->MaxWalkSpeed = 1000;
+				GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Red,TEXT("12312"));
+			}
+			if(!bMovementStop)
+			{
+				AIC_Ref->MoveToLocation(Character->GetActorLocation(), -1.f);
+				GetCharacterMovement()->MaxWalkSpeed = 1000;
+				GEngine->AddOnScreenDebugMessage(-1,0.1,FColor::Blue,TEXT("12312"));
+			}
 		}
 	}
-
 }
 
 void ARampage::CanJump()
 {
-	FTimerHandle ccc;
 	if(JumpAmount <= 1)
 	{
-		GetWorldTimerManager().SetTimer(ccc,this,&ARampage::CanJump,20.f);
+		GetWorldTimerManager().SetTimer(bCanJumpTrigger,this,&ARampage::CanJump,15.f);
 	}
 	else
 	{
-		GetWorldTimerManager().ClearTimer(ccc);
+		GetWorldTimerManager().ClearTimer(bCanJumpTrigger);
 	}
+	GEngine->AddOnScreenDebugMessage(-1,10.f,FColor::White,TEXT("Tetiklendi."));
 	bCanJump = true;
 }
 
@@ -158,6 +166,18 @@ void ARampage::PlayJumpEndFX()
 			UGameplayStatics::PlaySound2D(this,Character->GetStoneHitWorldSoundCue());
 			bJumping = false;
 			bMovementStop = false;
+			bCanJump = false;
+			GetWorldTimerManager().ClearTimer(bCanJumpTrigger);
+			GetWorldTimerManager().SetTimer(bCanJumpTrigger,this,&ARampage::CanJump,15.f);
+			if(bFirstJumping)
+			{
+				bFirstJumping = false;
+			}
+			if(bSecondJumping)
+			{
+				bSecondJumping = false;
+			}
+			PlayThrowStoneAnimMontage();
 		}
 	}
 }
@@ -219,6 +239,24 @@ void ARampage::GroundSmashSpawn()
 }
 void ARampage::Jump()
 {
+	/*if(!IsValid(AIC_Ref))
+	{
+		AIC_Ref = Cast<AEnemyController>(GetController());
+	}
+	else
+	{
+		if(bFirstJumping)
+		{
+			AIC_Ref->MoveToLocation(FirstJumpTargetLocation, -1.f);
+			GetCharacterMovement()->MaxWalkSpeed = 1000;
+		}
+		if(bSecondJumping)
+		{
+			AIC_Ref->MoveToLocation(FirstJumpTargetLocation, -1.f);
+			GetCharacterMovement()->MaxWalkSpeed = 1000;
+		}
+	}*/
+	GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Blue,TEXT("birinci zıplama oldu"));
 	JumpAmount++;
 	Super::Jump();
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -240,7 +278,7 @@ void ARampage::LeftArmOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	{
 		if(!Character->GetInvincibility())
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() - 7.5f);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5.f);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
@@ -248,10 +286,48 @@ void ARampage::LeftArmOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		}
 		else
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() + 7.5f);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5.f);
 			if(Character->GetCharacterHealth() >= 100)
 			{
 				Character->SetCharacterHealth(100);
+			}
+		}
+		UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+		if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
+		{
+			if(Character->GetCameraManager())
+			{
+				Character->GetCameraManager()->StartCameraShake(Character->GetCameraShakeHitReact(),1);
+			}
+			if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
+			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetWarriorHitReactSoundCue());
+				if(bBehind)
+				{
+					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Back"));
+				}
+				else
+				{
+					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+				}
+				Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
+			}
+			if(Character->GetCharacterState() == ECharacterState::ECS_Archer)
+			{
+				UGameplayStatics::PlaySound2D(Character,Character->GetArcherHitReactSoundCue());
+				if(bBehind)
+				{
+					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Back"));
+				}
+				else
+				{
+					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+				}
+				Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
 			}
 		}
 		bLeftArmCanDamage = false;
@@ -267,7 +343,7 @@ void ARampage::RightArmOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	{
 		if(!Character->GetInvincibility())
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() - 7.5f);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5.f);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
@@ -275,7 +351,7 @@ void ARampage::RightArmOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 		}
 		else
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() + 7.5f);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5.f);
 			if(Character->GetCharacterHealth() >= 100)
 			{
 				Character->SetCharacterHealth(100);
@@ -302,10 +378,12 @@ void ARampage::Tick(float DeltaTime)
 		{
 			Character->SetRampageRendered(false);
 		}
-		Distance = FVector::Distance(GetActorLocation(),FirstJumpTargetLocation);
+		FirstJumpDistance = FVector::Distance(GetActorLocation(),FirstJumpTargetLocation);
+		SecondJumpDistance = FVector::Distance(GetActorLocation(),SecondJumpTargetLocation);
+		Distance = FVector::Distance(GetActorLocation(), Character->GetActorLocation());
 		if(bIsInAir)
 		{
-			if(Distance > 1000.f)
+			if((FirstJumpDistance > 1000.f && bFirstJumping) || (SecondJumpDistance > 1000.f && bSecondJumping))
 			{
 				if(bFirstJump && !bSecondJump)
 				{
@@ -323,15 +401,14 @@ void ARampage::Tick(float DeltaTime)
 					FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
 					SetActorRotation(FRotator(GetActorRotation().Pitch,NewRotation.Yaw,NewRotation.Roll));
 				}
-	
+				SetActorLocation(GetActorLocation() + (GetActorForwardVector() * (Distance * 0.8f) * DeltaTime));
 			}
-			SetActorLocation(GetActorLocation() + (GetActorForwardVector() * (Distance) * DeltaTime));
 		}
 		if(bJumping && !bIsInAir)
 		{
 			PlayJumpEndFX();
 		}
-		if(!bIsInAir && !bJumping && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && Distance < 600.f && bCanAttack)
+		if(!bIsInAir && !bJumping && RampageCombatState == ERampageCombatState::ERCS_Unoccupied && Distance < 600.f && bCanAttack && !bMovementStop)
 		{
 			GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Blue,TEXT("131233213"));
 			Attack();
@@ -342,31 +419,36 @@ void ARampage::Tick(float DeltaTime)
 		{
 			if(JumpAmount == 0)
 			{
-				float FirstJumpDistance = FVector::Distance(GetActorLocation(),FirstJumpTargetLocation);
+				//float FirstJumpDistance = FVector::Distance(GetActorLocation(),FirstJumpTargetLocation);
 				if(FirstJumpDistance > 5500 && !bFirstJump)
 				{
 					bCanJump = false;
+					bFirstJumping = true;
 					bFirstJump = true;
 					bMovementStop = true;
 					FTimerHandle ccc;
 					GetWorldTimerManager().SetTimer(ccc,this,&ARampage::Jump,1.f);
+					GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Blue,TEXT("birinci zıplama"));
 				}
 			}
 			else
 			{
-				float SecondJumpDistance = FVector::Distance(GetActorLocation(),SecondJumpTargetLocation);
+				//float SecondJumpDistance = FVector::Distance(GetActorLocation(),SecondJumpTargetLocation);
 				if(SecondJumpDistance > 5500 && !bSecondJump)
 				{
 					bCanJump = false;
-					GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Green,TEXT("2."));
+					bSecondJumping = true;
 					bSecondJump = true;
 					bMovementStop = true;
 					FTimerHandle ccc;
 					GetWorldTimerManager().SetTimer(ccc,this,&ARampage::Jump,1.f);
+					GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::Blue,TEXT("ikinci zıplama"));
 				}
 			}
 
 		}
 	}
 }
+
+
 

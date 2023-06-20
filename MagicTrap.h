@@ -6,6 +6,7 @@
 #include "Grux.h"
 #include "Khaimera.h"
 #include "Narbash.h"
+#include "Rampage.h"
 #include "GameFramework/Actor.h"
 #include "WarriorCharacter.h"
 #include "MagicTrap.generated.h"
@@ -45,4 +46,6 @@ private:
 	AKhaimera* Khaimera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess))
 	ANarbash* Narbash;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess))
+	ARampage* Rampage;
 };

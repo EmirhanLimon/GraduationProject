@@ -8,6 +8,7 @@
 #include "Khaimera.h"
 #include "MagicTrap.h"
 #include "Narbash.h"
+#include "Rampage.h"
 #include "NavigationSystemTypes.h"
 #include "Chaos/GeometryParticlesfwd.h"
 #include "Engine/LODActor.h"
@@ -109,7 +110,7 @@ void AArrow::Tick(float DeltaTime)
 			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Black,TEXT("qweqwwe"));
 			break;
 		case 3:
-			ClampValue =  FMath::Clamp((Alpha + 0.2f),0,1);
+			ClampValue =  FMath::Clamp((Alpha + 0.4f),0,1);
 			Alpha = ClampValue;
 			FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),Character->GetEnemyTargetLocation());
 			FRotator NewRotation = FRotator(FQuat::Slerp(UE::Math::TQuat<double>(GetActorRotation()), UE::Math::TQuat<double>(TargetRotation), Alpha));
@@ -126,12 +127,18 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	AFey* Fey = Cast<AFey>(OtherActor);
 	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
 	AMagicTrap* MagicTrap = Cast<AMagicTrap>(OtherActor);
 	AEnemySpawnPortal* EnemySpawnPortal = Cast<AEnemySpawnPortal>(OtherActor);
 	if(OtherActor != this && OtherActor != MagicTrap && OtherActor != EnemySpawnPortal)
 	{
 		if(Grux && !Grux->GetDied())
 		{
+			if(Character->GetChangeCharacterFormValue() <= 99)
+			{
+				Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+			}
+
 			if(Character->GetSwitchCounter() == 1)
 			{
 				Grux->SetGruxHealth(Grux->GetGruxHealth() - (20.f + (Character->ArrowDamageWithSpeed / 10)));
@@ -142,7 +149,7 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 			}
 			else
 			{
-				Grux->SetGruxHealth(Grux->GetGruxHealth() - (10.f + (Character->ArrowDamageWithSpeed / 10)));
+				Grux->SetGruxHealth(Grux->GetGruxHealth() - (10.f + (Character->ArrowSpeed / 10)));
 			}
 			if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 			{
@@ -169,6 +176,10 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		}
 		if(Khaimera && !Khaimera->GetDied())
 		{
+			if(Character->GetChangeCharacterFormValue() <= 99)
+			{
+				Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+			}
 			if(Character->GetSwitchCounter() == 1)
 			{
 				Khaimera->SetKhaimeraHealth(Khaimera->GetKhaimeraHealth() - (25.f + (Character->ArrowDamageWithSpeed / 10)));
@@ -206,6 +217,10 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 		}
 		if(Narbash && !Narbash->GetDied() && !Narbash->GetInvincibility())
 		{
+			if(Character->GetChangeCharacterFormValue() <= 99)
+			{
+				Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+			}
 			if(Character->GetSwitchCounter() == 1)
 			{
 				Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - (25.f + (Character->ArrowDamageWithSpeed / 10)));
@@ -241,8 +256,31 @@ void AArrow::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),Character->GetBloodFXParticle(),Narbash->GetActorLocation() + (Narbash->GetActorForwardVector() * 50.f),FRotator(0,0,0));
 			}
 		}
+		if(Rampage && !Rampage->GetRampageDied())
+		{
+			if(Character->GetChangeCharacterFormValue() <= 99)
+			{
+				Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+			}
+			if(Character->GetSwitchCounter() == 1)
+			{
+				Rampage->SetRampageHealth(Rampage->GetRampageHealth() - (25.f + (Character->ArrowDamageWithSpeed / 10)));
+			}
+			else if(Character->GetSwitchCounter() == 2)
+			{
+				Rampage->SetRampageHealth(Rampage->GetRampageHealth() - 30.f);
+			}
+			else
+			{
+				Rampage->SetRampageHealth(Rampage->GetRampageHealth() - (10.f + (Character->ArrowDamageWithSpeed / 10)));
+			}
+		}
 		if(Fey && !Fey->GetDied())
 		{
+			if(Character->GetChangeCharacterFormValue() <= 99)
+			{
+				Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+			}
 			if(Character->GetSwitchCounter() == 1)
 			{
 				Fey->SetFeyHealth(Fey->GetFeyHealth() - (25.f + (Character->ArrowDamageWithSpeed / 10)));

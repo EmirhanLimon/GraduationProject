@@ -177,7 +177,7 @@ void AKhaimera::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	{
 		if(!Character->GetInvincibility())
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 4);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
@@ -185,7 +185,7 @@ void AKhaimera::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 		}
 		else
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 4);
 			if(Character->GetCharacterHealth() >= 100)
 			{
 				Character->SetCharacterHealth(100);
@@ -248,7 +248,7 @@ void AKhaimera::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	{
 		if(!Character->GetInvincibility())
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() - 5);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 4);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
@@ -256,7 +256,7 @@ void AKhaimera::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		}
 		else
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() + 5);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 4);
 			if(Character->GetCharacterHealth() >= 100)
 			{
 				Character->SetCharacterHealth(100);

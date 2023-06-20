@@ -125,8 +125,21 @@ private:
 	bool bFirstJump;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	bool bSecondJump;
-
+	FTimerHandle bCanJumpTrigger;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float FirstJumpDistance;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float SecondJumpDistance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bFirstJumping;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bSecondJumping;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bBehind;
 public:
+	FORCEINLINE float GetRampageHealth() const { return RampageHealth; }
+	FORCEINLINE bool GetRampageDied() const { return bRampageDied; }
+	FORCEINLINE void SetRampageHealth(float NewRampageHealth) { RampageHealth = NewRampageHealth; }
 	FORCEINLINE void SetbIsInAir(bool NewbIsInAir) { bIsInAir = NewbIsInAir; }
-
+	FORCEINLINE void SetBehind(bool NewbBehind) { bBehind = NewbBehind; }
 };

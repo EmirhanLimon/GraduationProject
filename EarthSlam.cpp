@@ -5,6 +5,7 @@
 #include "Khaimera.h"
 #include "Grux.h"
 #include "Narbash.h"
+#include "Rampage.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -56,8 +57,13 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	AGrux* Grux = Cast<AGrux>(OtherActor);
 	AKhaimera* Khaimera = Cast<AKhaimera>(OtherActor);
 	ANarbash* Narbash = Cast<ANarbash>(OtherActor);
+	ARampage* Rampage = Cast<ARampage>(OtherActor);
 	if(Grux)
 	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
 		if(Grux->GetGruxCombatState() == EGruxCombatState::EGCS_Unoccupied)
 		{
 			UGameplayStatics::PlaySound2D(Grux,Character->GetGruxHitReactSoundCue());
@@ -71,6 +77,10 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	}
 	if(Khaimera)
 	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
 		if(Khaimera->GetKhaimeraCombatState() == EKhaimeraCombatState::EKCS_Unoccupied)
 		{
 			UGameplayStatics::PlaySound2D(Khaimera,Character->GetKhaimeraHitReactSoundCue());
@@ -84,6 +94,10 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	}
 	if(Narbash && !Narbash->GetInvincibility())
 	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
 		if(Narbash->GetNarbashCombatState() == ENarbashCombatState::ENCS_Unoccupied)
 		{
 			UGameplayStatics::PlaySound2D(Narbash,Character->GetNarbashHitReactSoundCue());
@@ -93,6 +107,15 @@ void AEarthSlam::EarthSlamOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 			Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
 		}
 		Narbash->SetNarbashHealth(Narbash->GetNarbashHealth() - 30.f);
+		Destroy();
+	}
+	if(Rampage)
+	{
+		if(Character->GetChangeCharacterFormValue() <= 99)
+		{
+			Character->SetChangeCharacterFormValue(Character->GetChangeCharacterFormValue() + 1.f);
+		}
+		Rampage->SetRampageHealth(Rampage->GetRampageHealth() - 25.f);
 		Destroy();
 	}
 	FTimerHandle DestroyTimer;

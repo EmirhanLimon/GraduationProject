@@ -56,11 +56,28 @@ void AGroundSmash::GroundSmashOverlap(UPrimitiveComponent* OverlappedComponent, 
 	{
 		if(!Character->GetInvincibility())
 		{
-			GEngine->AddOnScreenDebugMessage(-1,1.f,FColor::Black,TEXT("23131"));
 			Character->SetCharacterHealth(Character->GetCharacterHealth() - 15);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
+			}
+			UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+			if(Character->GetCombatState() == ECombatState::ECS_Unoccupied && !Character->GetIsInAir() && !Character->GetRolling() && !Character->GetCharacterChanging())
+			{
+				if(Character->GetCharacterState() == ECharacterState::ECS_Warrior)
+				{
+					UGameplayStatics::PlaySound2D(Character,Character->GetWarriorHitReactSoundCue());
+					AnimInstance->Montage_Play(Character->GetWarriorCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+					Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
+				}
+				if(Character->GetCharacterState() == ECharacterState::ECS_Archer)
+				{
+					UGameplayStatics::PlaySound2D(Character,Character->GetArcherHitReactSoundCue());
+					AnimInstance->Montage_Play(Character->GetArcherCharacterHitReacts());
+					AnimInstance->Montage_JumpToSection(FName("Front"));
+					Character->SetCombatState(ECombatState::ECS_FireTimerInProgress);
+				}
 			}
 		}
 		else

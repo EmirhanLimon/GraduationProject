@@ -44,6 +44,7 @@ void AEnemySpawnPortal::PortalOverlap(UPrimitiveComponent* OverlappedComponent, 
 	if(Character == nullptr) return;
 	if(Character && Character->GetAmountOfDeadEnemies() == 5)
 	{
+		GEngine->AddOnScreenDebugMessage(-1,5.f,FColor::White,TEXT("OLDU"));
 		bRotation = true;
 		FTimerHandle RotationTimer;
 		GetWorldTimerManager().SetTimer(RotationTimer,this,&AEnemySpawnPortal::RotationEnd,2.f);

@@ -89,7 +89,6 @@ void AGrux::Patrol()
 				AIC_Ref->MoveToLocation(NavLoc);
 				GetWorldTimerManager().SetTimer(PatrolTimer, this, &AGrux::Patrol, 7.5f);
 				GetCharacterMovement()->MaxWalkSpeed = 400;
-				GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Black,TEXT("1"));
 			}
 		}
 		else
@@ -99,7 +98,6 @@ void AGrux::Patrol()
 				AIC_Ref->MoveToLocation(NavLoc);
 				GetWorldTimerManager().SetTimer(PatrolTimer, this, &AGrux::Patrol, 7.5f);
 				GetCharacterMovement()->MaxWalkSpeed = 400;
-				GEngine->AddOnScreenDebugMessage(-1,2.f,FColor::Black,TEXT("2"));
 			}
 		}
 	}
@@ -174,7 +172,7 @@ void AGrux::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	{
 		if(!Character->GetInvincibility())
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() - 3);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 2);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
@@ -182,7 +180,7 @@ void AGrux::LeftWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 		}
 		else
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() + 3);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() + 2);
 			if(Character->GetCharacterHealth() >= 100)
 			{
 				Character->SetCharacterHealth(100);
@@ -242,7 +240,7 @@ void AGrux::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 	Character = Cast<AWarriorCharacter>(OtherActor);
 	if(Character && bCanDoDamageRightWeapon && !bGruxDied && !bGruxStunned)
 	{
-		Character->SetCharacterHealth(Character->GetCharacterHealth() - 3);
+		Character->SetCharacterHealth(Character->GetCharacterHealth() - 2);
 		bCanDoDamageRightWeapon = false;
 		if(Character->GetBloodFXParticle())
 		{

@@ -4,6 +4,7 @@
 #include "MagicTrap.h"
 
 
+
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -49,6 +50,7 @@ void AMagicTrap::TrapOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	Grux = Cast<AGrux>(OtherActor);
 	Khaimera = Cast<AKhaimera>(OtherActor);
 	Narbash = Cast<ANarbash>(OtherActor);
+	Rampage = Cast<ARampage>(OtherActor);
 	if(Grux)
 	{
 		Grux->SetGruxStunned(true);
@@ -64,6 +66,10 @@ void AMagicTrap::TrapOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		Narbash->SetNarbashStunned(true);
 		Narbash->GetCharacterMovement()->MaxWalkSpeed = 0;
 	}
+	if(Rampage)
+	{
+		Rampage->GetCharacterMovement()->MaxWalkSpeed = 0;
+	}
 }
 
 void AMagicTrap::TrapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -73,6 +79,7 @@ void AMagicTrap::TrapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor
 	Grux = Cast<AGrux>(OtherActor);
 	Khaimera = Cast<AKhaimera>(OtherActor);
 	Narbash = Cast<ANarbash>(OtherActor);
+	Rampage = Cast<ARampage>(OtherActor);
 	if(Grux)
 	{
 		Grux->SetGruxStunned(false);
@@ -87,6 +94,10 @@ void AMagicTrap::TrapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor
 	{
 		Narbash->SetNarbashStunned(false);
 		Narbash->GetCharacterMovement()->MaxWalkSpeed = 800;
+	}
+	if(Rampage)
+	{
+		Rampage->GetCharacterMovement()->MaxWalkSpeed = 1000;
 	}
 }
 

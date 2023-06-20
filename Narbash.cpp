@@ -117,6 +117,7 @@ void ANarbash::Destroyed()
 	}
 	else
 	{
+		Character->SetAmountOfDeadEnemies(5);
 		Character->SetWaveState(EWaveState::EWS_WaveFive);
 	}
 	Destroy();
@@ -200,7 +201,7 @@ void ANarbash::RightWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	{
 		if(!Character->GetInvincibility())
 		{
-			Character->SetCharacterHealth(Character->GetCharacterHealth() - 3);
+			Character->SetCharacterHealth(Character->GetCharacterHealth() - 1);
 			if(Character->GetCharacterHealth() <= 0)
 			{
 				Character->SetCharacterHealth(0);
